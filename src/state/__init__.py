@@ -51,27 +51,38 @@ class InitialState:
     def __repr__(self) -> str: 
         return repr(self.component)
 
+    @property
+    def _children(self)-> list[State]: 
+        return self.component._children
+
 
 @dataclasses.dataclass
 class StateMachine: 
-    initial_state: State = dataclasses.field(
-            default=State(UNSET), 
+    
+    _children: list[State] = dataclasses.field(
+            default_factory=list, 
             init=False)
     current_state: State = dataclasses.field(
-            default=State(UNSET), 
-            init=False) 
+        default=State(UNSET), 
+        init=False) 
 
     def start(self): 
-        head = self.initial_state
+        head = self 
+        level = self._children 
         while not head.is_leaf: 
-            for child_state in head:
+            for child_state in level:
                 if child_state.should_initially_enter():
                     head = child_state
+                    level = head._children
                     break
         self.current_state = head  
 
     def get_current_state(self) -> State: 
         return self.current_state
+
+    @property
+    def is_leaf(self) -> bool: 
+        return not bool(self._children)
 
 
 @dataclasses.dataclass
@@ -81,7 +92,7 @@ class StateMachineBuilder:
             default_factory=StateMachine)
 
     def add_state(self, state:State): 
-        self.machine.initial_state = state
+        self.machine._children.append(state)
 
     def get_machine(self) -> StateMachine: 
         return self.machine 

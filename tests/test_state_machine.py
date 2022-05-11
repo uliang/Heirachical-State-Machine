@@ -14,8 +14,11 @@ def factory():
     heating.add_substate(InitialState(toasting)) 
     heating.add_substate(baking)
 
-    toaster_factory.add_state(heating)
+    toaster_factory.add_state(InitialState(heating))
 
+    door_open = State('door_open') 
+    toaster_factory.add_state(door_open)
+    
     return toaster_factory 
 
 
