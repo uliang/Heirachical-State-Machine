@@ -1,6 +1,9 @@
 import pytest
-from state import InitialState, StateMachineBuilder
-from state import State
+from state import StateMachineBuilder
+from state import State, InitialState
+from state import Transition
+from state.signals import postman
+from state.events import Event
 
 
 @pytest.fixture
@@ -18,7 +21,10 @@ def factory():
 
     door_open = State('door_open') 
     toaster_factory.add_state(door_open)
-    
+
+    door_open_trans = Transition(heating, door_open) 
+    toaster_factory.add_triggered_transition(Event('DOOR_OPEN'), door_open_trans)
+
     return toaster_factory 
 
 
@@ -26,6 +32,11 @@ def factory():
 def machine(factory): 
     return factory.get_machine()
 
+
+@pytest.fixture
+def setup_machine(machine): 
+    machine.start()
+    machine.subscribe(postman)
 
 def test_state_machine_builder_do_build(factory): 
     machine = factory.get_machine()
@@ -35,3 +46,9 @@ def test_state_machine_builder_do_build(factory):
 def test_machine_is_in_an_initial_state(machine): 
     machine.start()
     assert machine.get_current_state() == State('toasting')
+
+# @pytest.mark.skip
+@pytest.mark.usefixtures('setup_machine')
+def test_state_transitions_to_target_state_on_event_emitted(machine): 
+    postman.send(event=Event('DOOR_OPEN'))
+    assert machine.get_current_state() == State('door_open')
