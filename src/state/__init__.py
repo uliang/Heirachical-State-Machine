@@ -1,9 +1,15 @@
 from __future__ import annotations
 import dataclasses
 
+from blinker.base import Signal
+
 
 UNSET = 'UNSET'
 
+
+@dataclasses.dataclass
+class Event: 
+    name:str
 
 @dataclasses.dataclass(eq=True)
 class State: 
@@ -76,6 +82,12 @@ class StateMachine:
                     level = head._children
                     break
         self.current_state = head  
+    
+    def dispatch(self, sender, event:Event): 
+        ...
+
+    def subscribe(self, event_emitter:Signal): 
+        event_emitter.connect(self.dispatch)
 
     def get_current_state(self) -> State: 
         return self.current_state
