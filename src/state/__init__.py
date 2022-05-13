@@ -3,13 +3,13 @@ import dataclasses
 
 from blinker.base import Signal
 
+from state.events import Event 
+
 
 UNSET = 'UNSET'
+UNHANDLED = 'UNHANDLED'
+UNSET_EVENT = Event(UNSET)
 
-
-@dataclasses.dataclass
-class Event: 
-    name:str
 
 @dataclasses.dataclass(eq=True)
 class State: 
@@ -19,8 +19,15 @@ class State:
             compare=False, 
             repr=True)
 
-    def add_substate(self, substate:State): 
+    parent: State = dataclasses.field(
+            compare=False, 
+            repr=False, 
+            init=False)
+
+    def add_substate(self, substate:State)->State: 
         self._children.append(substate)
+        substate.parent = self
+        return substate
 
     def should_initially_enter(self) -> bool: 
         return False
@@ -31,6 +38,10 @@ class State:
 
     def __iter__(self): 
         return iter(self._children)
+
+
+UNSET_STATE = State(UNSET)
+UNHANDLED_STATE = State(UNHANDLED)
 
 
 @dataclasses.dataclass
@@ -61,16 +72,38 @@ class InitialState:
     def _children(self)-> list[State]: 
         return self.component._children
 
+    @property
+    def parent(self) -> State: 
+        return self.component.parent
+
+    @parent.setter
+    def parent(self, state: State): 
+        self.component.parent = state
+
+@dataclasses.dataclass
+class Transition: 
+    source: State 
+    dest: State 
+
+    def do_transition(self, machine:StateMachine) -> State: 
+        head = machine.get_current_state() 
+        while self.source != head: 
+            head = head.parent
+            if head is None:
+                return UNHANDLED_STATE 
+        return self.dest
+
 
 @dataclasses.dataclass
 class StateMachine: 
-    
+    parent = None 
     _children: list[State] = dataclasses.field(
             default_factory=list, 
             init=False)
     current_state: State = dataclasses.field(
-        default=State(UNSET), 
+        default=UNSET_STATE, 
         init=False) 
+    _transition_registry: dict[str, Transition] = dataclasses.field(default_factory=dict) 
 
     def start(self): 
         head = self 
@@ -84,7 +117,9 @@ class StateMachine:
         self.current_state = head  
     
     def dispatch(self, sender, event:Event): 
-        ...
+        dest_state = self._transition_registry[event.name].do_transition(self)
+        if dest_state is not UNHANDLED_STATE: 
+            self.current_state = dest_state
 
     def subscribe(self, event_emitter:Signal): 
         event_emitter.connect(self.dispatch)
@@ -109,3 +144,5 @@ class StateMachineBuilder:
     def get_machine(self) -> StateMachine: 
         return self.machine 
 
+    def add_triggered_transition(self, trigger:Event, transition: Transition): 
+        self.machine._transition_registry[trigger.name] = transition 
