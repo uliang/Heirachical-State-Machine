@@ -113,6 +113,9 @@ class StateMachine:
         self.set_current_state(ROOT)
 
     def dispatch(self, sender, event:Event): 
+        if self.get_current_state() is UNSET: 
+            raise MachineNotStarted("State machine has not been started. "  
+            "Call the start method on StateMachine before post any events to the machine.")
         dest_state = self._transition_registry[event.name].do_transition(self)
         if dest_state is not UNHANDLED_STATE: 
             self._current_state = dest_state
