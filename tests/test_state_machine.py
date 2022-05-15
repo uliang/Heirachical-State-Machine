@@ -1,5 +1,5 @@
 import pytest
-from state import StateMachineBuilder
+from state import MachineNotStarted, StateMachineBuilder
 from state import State, InitialState
 from state import Transition
 from state.signals import postman
@@ -29,13 +29,13 @@ def factory():
 
 @pytest.fixture
 def machine(factory): 
-    return factory.get_machine()
-
+    machine = factory.get_machine()
+    machine.subscribe(postman)
+    return machine
 
 @pytest.fixture
 def setup_machine(machine): 
     machine.start()
-    machine.subscribe(postman)
 
 def test_state_machine_builder_do_build(factory): 
     machine = factory.get_machine()
@@ -46,6 +46,12 @@ def test_machine_is_in_an_initial_state(machine):
     machine.start()
     assert machine.get_current_state() == State('toasting')
 
+def test_machine_cannot_transition_if_not_started(machine): 
+    with pytest.raises(MachineNotStarted) as excinfo: 
+        machine.subscribe(postman)
+        postman.send(event=Event('DOOR_OPEN'))
+    assert excinfo.value.message == "State machine has not been started. Call the start method on StateMachine before post any events to the machine."
+        
 # @pytest.mark.skip
 @pytest.mark.usefixtures('setup_machine')
 def test_state_transitions_to_target_state_on_event_emitted(machine): 
