@@ -10,17 +10,16 @@ from state.events import Event
 def factory(): 
     toaster_factory = StateMachineBuilder('toaster')
 
+    heating = State('heating') 
     toasting = State('toasting') 
     baking = State('baking')
     
-    heating = State('heating') 
-    heating.add_substate(InitialState(toasting)) 
-    heating.add_substate(baking)
-
-    toaster_factory.add_state(InitialState(heating))
-
     door_open = State('door_open') 
-    toaster_factory.add_state(door_open)
+
+    heating = toaster_factory.add_state(InitialState(heating))
+    toasting = toaster_factory.add_state(InitialState(toasting), substate_of=heating)
+    baking = toaster_factory.add_state(baking, substate_of=heating) 
+    door_open = toaster_factory.add_state(door_open) 
 
     door_open_trans = Transition(heating, door_open) 
     toaster_factory.add_triggered_transition(Event('DOOR_OPEN'), door_open_trans)
@@ -47,7 +46,7 @@ def test_machine_is_in_an_initial_state(machine):
     machine.start()
     assert machine.get_current_state() == State('toasting')
 
-# @pytest.mark.skip
+@pytest.mark.skip
 @pytest.mark.usefixtures('setup_machine')
 def test_state_transitions_to_target_state_on_event_emitted(machine): 
     postman.send(event=Event('DOOR_OPEN'))
