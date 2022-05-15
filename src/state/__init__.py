@@ -64,6 +64,7 @@ class Transition:
                 return UNHANDLED_STATE 
         return self.dest
 
+
 @dataclasses.dataclass
 class Tree: 
     _vertices: list[State] = dataclasses.field(
@@ -87,6 +88,7 @@ class Tree:
         return not bool(self.children(this_node))
 
 
+
 @dataclasses.dataclass
 class StateMachine: 
     _state_tree: Tree = dataclasses.field(
@@ -101,17 +103,9 @@ class StateMachine:
         init=False) 
 
     def start(self): 
-        children = self._state_tree.children
-        leaf = self._state_tree.leaf
-        head = self._state_tree._ROOT
+        ROOT = self._state_tree._ROOT
+        self.set_current_state(ROOT)
 
-        while not leaf(head): 
-            for child in children(head):
-                if child.should_initially_enter():
-                    head = child
-                    break
-        self._current_state = head  
-    
     def dispatch(self, sender, event:Event): 
         dest_state = self._transition_registry[event.name].do_transition(self)
         if dest_state is not UNHANDLED_STATE: 
@@ -122,6 +116,18 @@ class StateMachine:
 
     def get_current_state(self) -> State: 
             return self._current_state
+
+    def set_current_state(self, state): 
+        children = self._state_tree.children
+        leaf = self._state_tree.leaf
+        head = state
+
+        while not leaf(head): 
+            for child in children(head):
+                if child.should_initially_enter():
+                    head = child
+                    break
+        self._current_state = head  
 
 
 @dataclasses.dataclass
