@@ -1,21 +1,18 @@
 from __future__ import annotations
 import dataclasses
-from typing import Optional
+from typing import Callable, Optional
 
 import blinker 
 
 from state.events import Event 
 
 
-UNSET = 'UNSET'
 UNHANDLED = 'UNHANDLED'
-UNSET_EVENT = Event(UNSET)
 
 
 class MachineNotStarted(Exception): 
     def __init__(self, message, *args: object) -> None:
-        super().__init__(*args)
-        self.message = message
+        super().__init__(message, *args)
 
 
 @dataclasses.dataclass(eq=True)
@@ -30,9 +27,8 @@ class State:
         return False
 
 
-
 UNSET = State('UNSET')
-UNHANDLED_STATE = State(UNHANDLED)
+
 
 @dataclasses.dataclass
 class InitialState: 
@@ -45,6 +41,10 @@ class InitialState:
     @property 
     def depth(self) -> int: 
         return self.component.depth 
+    
+    @property
+    def name(self) -> str: 
+        return self.component.name
 
     @depth.setter
     def depth(self, value:int): 
@@ -63,12 +63,9 @@ class Transition:
     dest: State 
 
     def do_transition(self, machine:StateMachine) -> State: 
-        head = machine.get_current_state() 
-        while self.source != head: 
-            head = head.parent
-            if head is None:
-                return UNHANDLED_STATE 
-        return self.dest
+        tree = machine._state_tree
+        lca = tree.get_lca(self.source, self.dest)
+        machine.set_current_state(self.dest)
 
 
 @dataclasses.dataclass
@@ -77,9 +74,7 @@ class Tree:
         default_factory=list) 
     _edges:list[tuple[State, State]] = dataclasses.field(
         default_factory=list) 
-    _ROOT: State = dataclasses.field(
-        default=State('ROOT'))
-
+   
     def children(self, this_node:State) -> list[State]: 
         return [child for parent, child in self._edges 
             if parent == this_node 
@@ -93,14 +88,24 @@ class Tree:
     def leaf(self, this_node: State) -> bool: 
         return not bool(self.children(this_node))
 
+    def get_lca(self, source:State, dest:State)-> State: 
+        ... 
+
+    def walk(self, node:State, callback:Callable[[State], None]): 
+        callback(node) 
+        for child in self.children(node): 
+            self.walk(child, callback)
 
 
 @dataclasses.dataclass
 class StateMachine: 
+    _ROOT: State = dataclasses.field(
+        default=State('ROOT'), 
+        init=False)
+
     _state_tree: Tree = dataclasses.field(
         default_factory=Tree, 
         init=False)
-
     _current_state: State = dataclasses.field(
         default=UNSET, 
         init=False) 
@@ -109,18 +114,21 @@ class StateMachine:
         init=False) 
 
     def start(self): 
-        ROOT = self._state_tree._ROOT
+        ROOT = self._ROOT
+        self._state_tree._vertices.append(ROOT)
         self.set_current_state(ROOT)
 
     def dispatch(self, sender, event:Event): 
-        if self.get_current_state() is UNSET: 
+        current_state = self.get_current_state()
+        # breakpoint()
+        if current_state is UNSET: 
             raise MachineNotStarted("State machine has not been started. "  
             "Call the start method on StateMachine before post any events to the machine.")
-        dest_state = self._transition_registry[event.name].do_transition(self)
-        if dest_state is not UNHANDLED_STATE: 
-            self._current_state = dest_state
-
-    def subscribe(self, event_emitter:Signal): 
+        transition: str | Transition = self._transition_registry.get(
+            (event.name, current_state.name), UNHANDLED)
+        # if transition is UNHANDLED:   
+        #     raise 
+        transition.do_transition(self)
         
     def subscribe(self, event_emitter:blinker.Signal): 
         event_emitter.connect(self.dispatch)    
@@ -129,9 +137,9 @@ class StateMachine:
         event_emitter.disconnect(self.dispatch)
 
     def get_current_state(self) -> State: 
-            return self._current_state
+        return self._current_state
 
-    def set_current_state(self, state): 
+    def set_current_state(self, state: State): 
         children = self._state_tree.children
         leaf = self._state_tree.leaf
         head = state
@@ -151,7 +159,7 @@ class StateMachineBuilder:
             default_factory=StateMachine)
 
     def add_state(self, state:State, *, substate_of: Optional[State] = None) -> State: 
-        parent = substate_of if substate_of else self.machine._state_tree._ROOT
+        parent = substate_of if substate_of else self.machine._ROOT
         state.depth = parent.depth + 1
         self.machine._state_tree._vertices.append(state) 
         self.machine._state_tree._edges.append((parent, state))
@@ -161,4 +169,10 @@ class StateMachineBuilder:
         return self.machine 
 
     def add_triggered_transition(self, trigger:Event, transition: Transition): 
-        self.machine._transition_registry[trigger.name] = transition 
+        registry = self.machine._transition_registry
+        def register_transition(state:State): 
+            registry[trigger.name, state.name] = transition 
+        
+        walk = self.machine._state_tree.walk
+        walk(transition.source, register_transition)
+            
