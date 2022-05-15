@@ -31,28 +31,28 @@ def factory():
 def machine(factory): 
     machine = factory.get_machine()
     machine.subscribe(postman)
-    return machine
+    yield machine
+    machine.unsubscribe(postman)
 
 @pytest.fixture
 def setup_machine(machine): 
     machine.start()
 
+
 def test_state_machine_builder_do_build(factory): 
     machine = factory.get_machine()
     assert machine is not None 
 
-
+@pytest.mark.usefixtures('setup_machine')
 def test_machine_is_in_an_initial_state(machine): 
-    machine.start()
     assert machine.get_current_state() == State('toasting')
 
-def test_machine_cannot_transition_if_not_started(machine): 
+@pytest.mark.usefixtures('machine')
+def test_machine_cannot_transition_if_not_started(): 
     with pytest.raises(MachineNotStarted) as excinfo: 
-        machine.subscribe(postman)
         postman.send(event=Event('DOOR_OPEN'))
-    assert excinfo.value.message == "State machine has not been started. Call the start method on StateMachine before post any events to the machine."
+    assert str(excinfo.value) == "State machine has not been started. Call the start method on StateMachine before post any events to the machine."
         
-# @pytest.mark.skip
 @pytest.mark.usefixtures('setup_machine')
 def test_state_transitions_to_target_state_on_event_emitted(machine): 
     postman.send(event=Event('DOOR_OPEN'))

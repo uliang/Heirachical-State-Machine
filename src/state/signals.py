@@ -2,4 +2,4 @@ import blinker
 
 ns = blinker.Namespace() 
 
-postman = ns.signal('postman') 
+postman:blinker.Signal = ns.signal('postman') 

@@ -2,7 +2,7 @@ from __future__ import annotations
 import dataclasses
 from typing import Optional
 
-from blinker.base import Signal
+import blinker 
 
 from state.events import Event 
 
@@ -121,7 +121,12 @@ class StateMachine:
             self._current_state = dest_state
 
     def subscribe(self, event_emitter:Signal): 
-        event_emitter.connect(self.dispatch)
+        
+    def subscribe(self, event_emitter:blinker.Signal): 
+        event_emitter.connect(self.dispatch)    
+
+    def unsubscribe(self, event_emitter:blinker.Signal): 
+        event_emitter.disconnect(self.dispatch)
 
     def get_current_state(self) -> State: 
             return self._current_state
