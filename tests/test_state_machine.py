@@ -46,7 +46,7 @@ def test_machine_is_in_an_initial_state(machine):
     machine.start()
     assert machine.get_current_state() == State('toasting')
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.usefixtures('setup_machine')
 def test_state_transitions_to_target_state_on_event_emitted(machine): 
     postman.send(event=Event('DOOR_OPEN'))
