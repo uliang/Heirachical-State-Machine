@@ -1,5 +1,6 @@
 import pytest
-from state import MachineNotStarted, StateMachineBuilder
+from state import MachineNotStarted, EventEmitterUnset 
+from state import StateMachineBuilder
 from state import State, InitialState
 from state import Transition
 from state.signals import postman
@@ -58,8 +59,12 @@ def test_machine_is_in_an_initial_state(machine):
     assert machine.get_current_state() == State('toasting')
 
 
-@pytest.mark.usefixtures('machine')
-def test_machine_cannot_transition_if_not_started(): 
+def test_factory_raises_event_emitter_not_set_if_get_machine_method_is_called_before_injecting_event_emitter(factory): 
+    with pytest.raises(EventEmitterUnset) as excinfo: 
+        machine = factory.get_machine() 
+    assert str(excinfo.value) == "Event emiiter has not been injected. Call set_event_emitter method with event emitter before obtaining machine."
+
+    
     with pytest.raises(MachineNotStarted) as excinfo: 
         postman.send(event=Event('DOOR_OPEN'))
     assert str(excinfo.value) == "State machine has not been started. Call the start method on StateMachine before post any events to the machine."
