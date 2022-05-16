@@ -117,6 +117,9 @@ class StateMachine:
     _transition_registry: dict[str, Transition] = \
         dataclasses.field(default_factory=dict, 
         init=False) 
+    _event_emitter: blinker.Signal = dataclasses.field(
+        default=None, 
+        init=False)
 
     def start(self): 
         ROOT = self._ROOT
@@ -163,6 +166,10 @@ class StateMachineBuilder:
     machine: StateMachine = dataclasses.field(
             default_factory=StateMachine)
 
+    def connect_event_emitter(self, event_emitter:blinker.Signal): 
+        self.machine._event_emitter = event_emitter
+        event_emitter.connect(self.machine.dispatch)
+
     def add_state(self, state:State, *, substate_of: Optional[State] = None) -> State: 
         parent = substate_of if substate_of else self.machine._ROOT
         state.depth = parent.depth + 1
@@ -171,6 +178,8 @@ class StateMachineBuilder:
         return state
 
     def get_machine(self) -> StateMachine: 
+        if self.machine._event_emitter is None: 
+            raise EventEmitterUnset("Event emiiter has not been injected. Call set_event_emitter method with event emitter before obtaining machine.")
         return self.machine 
 
     def add_triggered_transition(self, trigger:Event, transition: Transition): 
