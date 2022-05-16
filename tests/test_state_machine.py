@@ -38,24 +38,34 @@ def factory():
 
 
 @pytest.fixture
-def machine(factory): 
-    machine = factory.get_machine()
-    machine.subscribe(postman)
-    yield machine
-    machine.unsubscribe(postman)
+def inject_event_emitter(factory): 
+    factory.connect_event_emitter(postman)
+
+
+@pytest.fixture 
+def inject_event_emiiter_and_disconnect(factory): 
+    factory.connect_event_emitter(postman) 
+    yield 
+    machine = factory.get_machine() 
+    postman.disconnect(machine.dispatch)
+    
 
 @pytest.fixture
-def setup_machine(machine): 
+def machine(factory): 
+    machine = factory.get_machine()
     machine.start()
+    yield machine 
+    machine.stop()
 
 
+@pytest.mark.usefixtures('inject_event_emiiter_and_disconnect')
 def test_state_machine_builder_do_build(factory): 
     machine = factory.get_machine()
     assert machine is not None 
 
 
-@pytest.mark.usefixtures('setup_machine')
-def test_machine_is_in_an_initial_state(machine): 
+@pytest.mark.usefixtures('inject_event_emitter')
+def test_state_machine_starts_in_initial_state(machine):
     assert machine.get_current_state() == State('toasting')
 
 
@@ -65,33 +75,40 @@ def test_factory_raises_event_emitter_not_set_if_get_machine_method_is_called_be
     assert str(excinfo.value) == "Event emiiter has not been injected. Call set_event_emitter method with event emitter before obtaining machine."
 
     
+@pytest.mark.usefixtures('inject_event_emiiter_and_disconnect')
+def test_machine_cannot_transition_if_not_started(factory): 
     with pytest.raises(MachineNotStarted) as excinfo: 
         postman.send(event=Event('DOOR_OPEN'))
     assert str(excinfo.value) == "State machine has not been started. Call the start method on StateMachine before post any events to the machine."
         
 
-@pytest.mark.usefixtures('setup_machine')
+@pytest.mark.usefixtures('inject_event_emitter')
 def test_state_transitions_to_target_state_on_event_emitted(machine): 
     postman.send(event=Event('DOOR_OPEN'))
     assert machine.get_current_state() == State('door_open')
 
 
-@pytest.mark.usefixtures('setup_machine') 
+@pytest.mark.usefixtures('inject_event_emitter') 
 def test_state_transitions_to_target_state_and_enters_initial_substate(machine): 
     postman.send(event=Event('DOOR_OPEN')) 
     postman.send(event=Event('DOOR_CLOSE')) 
     assert machine.get_current_state() == State('toasting')
 
 
-@pytest.mark.usefixtures('setup_machine') 
+@pytest.mark.usefixtures('inject_event_emitter') 
 def test_state_transitions_on_do_bake_event(machine): 
     postman.send(event=Event('DO_BAKE')) 
     assert machine.get_current_state() == State('baking') 
 
-@pytest.mark.usefixtures('setup_machine')
+
+@pytest.mark.usefixtures('inject_event_emitter')
 def test_state_transitions_on_do_toast_event(machine): 
     postman.send(event=Event('DOOR_OPEN'))
     postman.send(event=Event('DOOR_CLOSE'))
     postman.send(event=Event('DO_BAKE')) 
     postman.send(event=Event('DO_TOAST'))
     assert machine.get_current_state() == State('toasting') 
+
+
+# @pytest.mark.usefixtures('inject_event_emitter') 
+# def test_entry_action_fires_on_entry_into_state(machine): 
