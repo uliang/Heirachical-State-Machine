@@ -23,6 +23,15 @@ def factory():
 
     door_open_trans = Transition(heating, door_open) 
     toaster_factory.add_triggered_transition(Event('DOOR_OPEN'), door_open_trans)
+    
+    door_close_trans = Transition(door_open, heating) 
+    toaster_factory.add_triggered_transition(Event('DOOR_CLOSE'), door_close_trans) 
+
+    do_bake_trans = Transition(heating, baking) 
+    toaster_factory.add_triggered_transition(Event('DO_BAKE'), do_bake_trans) 
+
+    do_toast_trans = Transition(heating, toasting) 
+    toaster_factory.add_triggered_transition(Event('DO_TOAST'), do_toast_trans) 
 
     return toaster_factory 
 
@@ -43,9 +52,11 @@ def test_state_machine_builder_do_build(factory):
     machine = factory.get_machine()
     assert machine is not None 
 
+
 @pytest.mark.usefixtures('setup_machine')
 def test_machine_is_in_an_initial_state(machine): 
     assert machine.get_current_state() == State('toasting')
+
 
 @pytest.mark.usefixtures('machine')
 def test_machine_cannot_transition_if_not_started(): 
@@ -53,7 +64,29 @@ def test_machine_cannot_transition_if_not_started():
         postman.send(event=Event('DOOR_OPEN'))
     assert str(excinfo.value) == "State machine has not been started. Call the start method on StateMachine before post any events to the machine."
         
+
 @pytest.mark.usefixtures('setup_machine')
 def test_state_transitions_to_target_state_on_event_emitted(machine): 
     postman.send(event=Event('DOOR_OPEN'))
     assert machine.get_current_state() == State('door_open')
+
+
+@pytest.mark.usefixtures('setup_machine') 
+def test_state_transitions_to_target_state_and_enters_initial_substate(machine): 
+    postman.send(event=Event('DOOR_OPEN')) 
+    postman.send(event=Event('DOOR_CLOSE')) 
+    assert machine.get_current_state() == State('toasting')
+
+
+@pytest.mark.usefixtures('setup_machine') 
+def test_state_transitions_on_do_bake_event(machine): 
+    postman.send(event=Event('DO_BAKE')) 
+    assert machine.get_current_state() == State('baking') 
+
+@pytest.mark.usefixtures('setup_machine')
+def test_state_transitions_on_do_toast_event(machine): 
+    postman.send(event=Event('DOOR_OPEN'))
+    postman.send(event=Event('DOOR_CLOSE'))
+    postman.send(event=Event('DO_BAKE')) 
+    postman.send(event=Event('DO_TOAST'))
+    assert machine.get_current_state() == State('toasting') 
