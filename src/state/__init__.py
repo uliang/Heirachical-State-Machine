@@ -126,6 +126,9 @@ class StateMachine:
         self._state_tree._vertices.append(ROOT)
         self.set_current_state(ROOT)
 
+    def stop(self): 
+        self._event_emitter.disconnect(self.dispatch) 
+
     def dispatch(self, sender, event:Event): 
         current_state = self.get_current_state()
         # breakpoint()
@@ -138,12 +141,6 @@ class StateMachine:
         #     raise 
         transition.do_transition(self)
         
-    def subscribe(self, event_emitter:blinker.Signal): 
-        event_emitter.connect(self.dispatch)    
-
-    def unsubscribe(self, event_emitter:blinker.Signal): 
-        event_emitter.disconnect(self.dispatch)
-
     def get_current_state(self) -> State: 
         return self._current_state
 
