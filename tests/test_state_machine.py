@@ -1,3 +1,4 @@
+from unittest.mock import MagicMock
 import pytest
 from state import MachineNotStarted, EventEmitterUnset 
 from state import StateMachineBuilder
@@ -7,12 +8,26 @@ from state.signals import postman
 from state.events import Event
 
 
-@pytest.fixture
-def factory(): 
-    toaster_factory = StateMachineBuilder('toaster')
+@pytest.fixture 
+def heater_on():
+    def heater_on_switch():
+        ...
+    heater_on_switch = MagicMock(spec=heater_on_switch)
+    return heater_on_switch 
 
-    heating = State('heating') 
-    toasting = State('toasting') 
+@pytest.fixture 
+def arm_time_event(): 
+    def timer_switch(toast_color):
+        ...
+    timer_switch = MagicMock(spec=timer_switch)
+    return timer_switch 
+
+@pytest.fixture
+def factory(heater_on, arm_time_event): 
+    toaster_factory = StateMachineBuilder('toaster')
+   
+    heating = State('heating', on_entry=heater_on) 
+    toasting = State('toasting', on_entry=arm_time_event, entry_params=('toast_color', )) 
     baking = State('baking')
     
     door_open = State('door_open') 
@@ -53,6 +68,7 @@ def inject_event_emiiter_and_disconnect(factory):
 @pytest.fixture
 def machine(factory): 
     machine = factory.get_machine()
+    machine.set_context({"toast_color": 3})
     machine.start()
     yield machine 
     machine.stop()
@@ -110,5 +126,7 @@ def test_state_transitions_on_do_toast_event(machine):
     assert machine.get_current_state() == State('toasting') 
 
 
-# @pytest.mark.usefixtures('inject_event_emitter') 
-# def test_entry_action_fires_on_entry_into_state(machine): 
+@pytest.mark.usefixtures('inject_event_emitter', 'machine' ) 
+def test_entry_action_fires_on_entry_into_state(arm_time_event, heater_on): 
+    heater_on.assert_called()
+    arm_time_event.assert_called_with(3)

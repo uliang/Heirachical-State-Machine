@@ -1,6 +1,6 @@
 from __future__ import annotations
 import dataclasses
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import blinker 
 
@@ -20,16 +20,22 @@ class MachineNotStarted(Exception):
         super().__init__(message, *args)
 
 
-@dataclasses.dataclass(eq=True)
+@dataclasses.dataclass()
 class State: 
     name: str = '' 
+    on_entry: Callable[[], None] | None = None 
+    entry_params: tuple[str] = dataclasses.field(default_factory=tuple)
+
     depth: int = dataclasses.field(default=0, 
         compare=False, 
         init=False, 
         repr=True)
-
+    
     def should_initially_enter(self) -> bool: 
         return False
+
+    def __eq__(self, other:State)-> bool: 
+        return self.name == other.name
 
 
 UNSET = State('UNSET')
@@ -155,7 +161,9 @@ class StateMachine:
                     head = child
                     break
         self._current_state = head  
-
+    
+    def set_context(self, context:dict[str, Any]):
+        ...
 
 @dataclasses.dataclass
 class StateMachineBuilder: 
