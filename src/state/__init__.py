@@ -68,6 +68,14 @@ class InitialState:
         return self.component == other 
 
 
+class StateRepository: 
+    def add(self, state:State):
+        ... 
+
+    def get(self, id: str) -> State: 
+        ...
+
+
 @dataclasses.dataclass
 class Transition: 
     source: State 
@@ -77,6 +85,9 @@ class Transition:
         tree = machine._state_tree
         lca = tree.get_lca(self.source, self.dest)
         machine.set_current_state(self.dest)
+
+    def add_trigger(self, trigger:Event): 
+        ... 
 
 
 @dataclasses.dataclass
@@ -187,7 +198,7 @@ class StateMachineBuilder:
             raise EventEmitterUnset("Event emiiter has not been injected. Call set_event_emitter method with event emitter before obtaining machine.")
         return self.machine 
 
-    def add_triggered_transition(self, trigger:Event, transition: Transition): 
+    def add_transition(self, trigger:Event, transition: Transition): 
         registry = self.machine._transition_registry
         def register_transition(state:State): 
             registry[trigger.name, state.name] = transition 
