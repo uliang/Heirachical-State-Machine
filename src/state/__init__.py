@@ -5,7 +5,7 @@ from typing import Any, Callable, Optional
 import blinker 
 
 from state.events import Event 
-
+from state.signals import postman
 
 UNHANDLED = 'UNHANDLED'
 
@@ -69,17 +69,20 @@ class InitialState:
 
 
 class StateRepository: 
+    _database: dict[str, State] = {} 
+    
     def add(self, state:State):
-        ... 
+        self._database[state.name] = state
 
     def get(self, id: str) -> State: 
-        ...
+        return self._database[id]
 
 
 @dataclasses.dataclass
 class Transition: 
     source: State 
     dest: State 
+    _trigger: Event = dataclasses.field(init=False) 
 
     def do_transition(self, machine:StateMachine) -> State: 
         tree = machine._state_tree
@@ -87,7 +90,7 @@ class Transition:
         machine.set_current_state(self.dest)
 
     def add_trigger(self, trigger:Event): 
-        ... 
+        self._trigger = trigger
 
 
 @dataclasses.dataclass
@@ -134,9 +137,10 @@ class StateMachine:
     _transition_registry: dict[str, Transition] = \
         dataclasses.field(default_factory=dict, 
         init=False) 
-    _event_emitter: blinker.Signal = dataclasses.field(
-        default=None, 
-        init=False)
+
+    def __post_init__(self): 
+        self._event_emitter:blinker.Signal = postman
+        postman.connect(self.dispatch)
 
     def start(self): 
         ROOT = self._ROOT
@@ -198,10 +202,11 @@ class StateMachineBuilder:
             raise EventEmitterUnset("Event emiiter has not been injected. Call set_event_emitter method with event emitter before obtaining machine.")
         return self.machine 
 
-    def add_transition(self, trigger:Event, transition: Transition): 
+    def add_transition(self, transition: Transition): 
         registry = self.machine._transition_registry
         def register_transition(state:State): 
-            registry[trigger.name, state.name] = transition 
+            trigger_name = transition._trigger.name
+            registry[trigger_name, state.name] = transition 
         
         walk = self.machine._state_tree.walk
         walk(transition.source, register_transition)
