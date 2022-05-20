@@ -5,18 +5,18 @@ from state import StateRepository
 from state import StateMachineBuilder
 from state import State, InitialState
 from state import Transition
-from state.signals import postman, entry_signal
+from state.signals import postman, entry_signal, update_repository
 from state.events import Event
 
 @pytest.fixture 
 def heater_on(): 
-    def heater_on_spec():
+    def heater_on_spec(sender, **kwargs):
         ...
     return create_autospec(heater_on_spec)
 
 @pytest.fixture 
 def arm_time_event(): 
-    def arm_time_event_spec(toast_color): 
+    def arm_time_event_spec(sender, toast_color, **kwargs): 
         ... 
     return create_autospec(spec=arm_time_event_spec) 
 
@@ -27,7 +27,8 @@ def state_repository():
     repo.add(State('toasting')) 
     repo.add(State('baking')) 
     repo.add(State('door_open')) 
-    return repo 
+    yield repo 
+    update_repository.disconnect(repo.update)
 
 @pytest.fixture
 def factory(state_repository): 
@@ -65,14 +66,15 @@ def factory(state_repository):
 
 
 @pytest.fixture
-def connect_entry_signals(state_repository, arm_time_event, heater_on): 
+def connect_entry_signals(factory, state_repository, arm_time_event, heater_on): 
     heating = state_repository.get('heating') 
+    # breakpoint() 
     entry_signal.connect(heater_on, heating)
 
     toasting = state_repository.get('toasting') 
     entry_signal.connect(arm_time_event, toasting) 
 
-    yield
+    yield heater_on, arm_time_event
     entry_signal.disconnect(heater_on)
     entry_signal.disconnect(arm_time_event)
 
@@ -85,7 +87,7 @@ def setup_unstarted_machine(factory):
     
 
 @pytest.fixture
-def machine(factory): 
+def machine(factory, connect_entry_signals): 
     machine = factory.get_machine()
     machine.set_context({"toast_color": 3})
     machine.start()
@@ -139,7 +141,9 @@ def test_state_transitions_on_do_toast_event(machine):
     assert machine.get_current_state() == State('toasting') 
 
 
-@pytest.mark.usefixtures('connect_entry_signals', 'machine' ) 
-def test_entry_action_fires_on_entry_into_state(arm_time_event, heater_on): 
+@pytest.mark.usefixtures('machine')
+def test_entry_action_fires_on_entry_into_state(heater_on, arm_time_event, state_repository): 
+    # assert entry_signal.receivers
     heater_on.assert_called()
-    arm_time_event.assert_called_with(3)
+    toasting = state_repository.get('toasting')
+    arm_time_event.assert_called_with(toasting, toast_color=3)

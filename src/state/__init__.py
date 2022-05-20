@@ -5,9 +5,14 @@ from typing import Any, Callable, Optional
 import blinker 
 
 from state.events import Event 
-from state.signals import postman
+from state.signals import postman, entry_signal, update_repository
 
 UNHANDLED = 'UNHANDLED'
+
+
+class StateNotFound(Exception): 
+    def __init__(self, message, *args): 
+        super().__init__(message, *args)
 
 
 class EventEmitterUnset(Exception): 
@@ -62,21 +67,31 @@ class InitialState:
         self.component.depth = value
 
     def __repr__(self) -> str: 
-        return repr(self.component)
+        return f"<{self.name} InitialState>"
 
     def __eq__(self, other:State) -> bool: 
         return self.component == other 
 
 
+@dataclasses.dataclass 
 class StateRepository: 
-    _database: dict[str, State] = {} 
-    
+    _database: dict[str, State] = dataclasses.field(default_factory=dict)  
+   
+    def __post_init__(self): 
+        update_repository.connect(self.update) 
+
     def add(self, state:State):
         self._database[state.name] = state
 
     def get(self, id: str) -> State: 
         return self._database[id]
 
+    def update(self, sender, state:State): 
+        try: 
+            self._database[state.name] = state 
+        except KeyError: 
+            ...
+            # TODO: raise StateNotFound
 
 @dataclasses.dataclass
 class Transition: 
@@ -137,6 +152,7 @@ class StateMachine:
     _transition_registry: dict[str, Transition] = \
         dataclasses.field(default_factory=dict, 
         init=False) 
+    _context: dict = dataclasses.field(default_factory=dict) 
 
     def __post_init__(self): 
         self._event_emitter:blinker.Signal = postman
@@ -152,7 +168,7 @@ class StateMachine:
 
     def dispatch(self, sender, event:Event): 
         current_state = self.get_current_state()
-        # breakpoint()
+        # 
         if current_state is UNSET: 
             raise MachineNotStarted("State machine has not been started. "  
             "Call the start method on StateMachine before post any events to the machine.")
@@ -173,12 +189,13 @@ class StateMachine:
         while not leaf(head): 
             for child in children(head):
                 if child.should_initially_enter():
+                    entry_signal.send(child, **self._context)
                     head = child
                     break
         self._current_state = head  
     
     def set_context(self, context:dict[str, Any]):
-        ...
+        self._context = context
 
 @dataclasses.dataclass
 class StateMachineBuilder: 
@@ -195,7 +212,7 @@ class StateMachineBuilder:
         state.depth = parent.depth + 1
         self.machine._state_tree._vertices.append(state) 
         self.machine._state_tree._edges.append((parent, state))
-        return state
+        update_repository.send(state=state)
 
     def get_machine(self) -> StateMachine: 
         if self.machine._event_emitter is None: 
