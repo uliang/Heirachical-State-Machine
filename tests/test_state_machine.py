@@ -1,149 +1,68 @@
-from unittest.mock import create_autospec
 import pytest
-from state import MachineNotStarted
-from state import StateRepository
-from state import StateMachineBuilder
-from state import State, InitialState
-from state import Transition
-from state.signals import postman, entry_signal, update_repository
-from state.events import Event
+from state import State, Entity
+import dataclasses
 
-@pytest.fixture 
-def heater_on(): 
-    def heater_on_spec(sender, **kwargs):
-        ...
-    return create_autospec(heater_on_spec)
 
-@pytest.fixture 
-def arm_time_event(): 
-    def arm_time_event_spec(sender, toast_color, **kwargs): 
-        ... 
-    return create_autospec(spec=arm_time_event_spec) 
+@dataclasses.dataclass
+class Toaster(Entity):
+    toast_color:int 
+    heater_on:bool = False 
+    arm_timer:bool = False
+    arm_timer_for_toast_color: int|None = None 
 
-@pytest.fixture 
-def state_repository(): 
-    repo = StateRepository() 
-    repo.add(State('heating')) 
-    repo.add(State('toasting')) 
-    repo.add(State('baking')) 
-    repo.add(State('door_open')) 
-    yield repo 
-    update_repository.disconnect(repo.update)
+    def arm_timer_event(self, sender, **kwargs): 
+        self.arm_timer = True 
+        self.arm_timer_for_toast_color = self.toast_color
+
+    def heater_on(self, sender, **kwargs): 
+        self.heater_on = True 
+
+    class StateConfig: 
+        heating = State(initial=True, on_entry='heater_on', 
+                        on={'DO_BAKE': 'baking', 
+                            'DO_TOAST': 'toasting', 
+                            'DOOR_OPEN': 'door_open'})   
+        toasting = State(initial=True, on_entry='arm_timer_event', 
+                        substate_of = 'heating', )
+        baking = State(substate_of='heating') 
+        door_open = State(on={'DOOR_CLOSE': 'heating'}) 
 
 @pytest.fixture
-def factory(state_repository): 
-    toaster_factory = StateMachineBuilder('toaster')
-   
-    heating = state_repository.get('heating') 
-    toaster_factory.add_state(InitialState(heating))
+def toaster(): 
+    Toaster(toast_color=3) 
+    toaster.start()
+    yield toaster
+    toaster.stop() 
 
-    toasting = state_repository.get('toasting') 
-    toaster_factory.add_state(InitialState(toasting), substate_of=heating)
-
-    baking = state_repository.get('baking') 
-    toaster_factory.add_state(baking, substate_of=heating) 
-
-    door_open = state_repository.get('door_open')
-    toaster_factory.add_state(door_open) 
-
-    door_open_trans = Transition(heating, door_open) 
-    door_open_trans.add_trigger(Event('DOOR_OPEN')) 
-    toaster_factory.add_transition(door_open_trans)
-    
-    door_close_trans = Transition(door_open, heating) 
-    door_close_trans.add_trigger(Event('DOOR_CLOSE')) 
-    toaster_factory.add_transition(door_close_trans) 
-
-    do_bake_trans = Transition(heating, baking) 
-    do_bake_trans.add_trigger(Event('DO_BAKE'))
-    toaster_factory.add_transition(do_bake_trans) 
-
-    do_toast_trans = Transition(heating, toasting) 
-    do_toast_trans.add_trigger(Event('DO_TOAST'))
-    toaster_factory.add_transition(do_toast_trans) 
-
-    return toaster_factory 
-
-
-@pytest.fixture
-def connect_entry_signals(factory, state_repository, arm_time_event, heater_on): 
-    heating = state_repository.get('heating') 
-    # breakpoint() 
-    entry_signal.connect(heater_on, heating)
-
-    toasting = state_repository.get('toasting') 
-    entry_signal.connect(arm_time_event, toasting) 
-
-    yield heater_on, arm_time_event
-    entry_signal.disconnect(heater_on)
-    entry_signal.disconnect(arm_time_event)
-
-
-@pytest.fixture 
-def setup_unstarted_machine(factory): 
-    machine = factory.get_machine() 
-    yield 
-    postman.disconnect(machine.dispatch)
-    
-
-@pytest.fixture
-def machine(factory, connect_entry_signals): 
-    machine = factory.get_machine()
-    machine.set_context({"toast_color": 3})
-    machine.start()
-    yield machine 
-    machine.stop()
-
-
-@pytest.mark.usefixtures('connect_entry_signals')
-def test_state_machine_builder_do_build(factory): 
-    machine = factory.get_machine()
-    assert machine is not None 
-
-
-@pytest.mark.usefixtures('connect_entry_signals')
-def test_state_machine_starts_in_initial_state(machine):
-    assert machine.get_current_state() == State('toasting')
+def test_state_machine_starts_in_initial_state(toaster):
+    assert toaster.isin('toasting')
 
     
-@pytest.mark.usefixtures('setup_unstarted_machine')
-def test_machine_cannot_transition_if_not_started(): 
-    with pytest.raises(MachineNotStarted) as excinfo: 
-        postman.send(event=Event('DOOR_OPEN'))
-    assert str(excinfo.value) == "State machine has not been started. Call the start method on StateMachine before post any events to the machine."
-        
-
-@pytest.mark.usefixtures('connect_entry_signals')
-def test_state_transitions_to_target_state_on_event_emitted(machine): 
-    postman.send(event=Event('DOOR_OPEN'))
-    assert machine.get_current_state() == State('door_open')
+def test_state_transitions_to_target_state_on_event_emitted( toaster): 
+    toaster.dispatch('DOOR_OPEN')
+    assert toaster.isin('door_open')
 
 
-@pytest.mark.usefixtures('connect_entry_signals')
-def test_state_transitions_to_target_state_and_enters_initial_substate(machine): 
-    postman.send(event=Event('DOOR_OPEN')) 
-    postman.send(event=Event('DOOR_CLOSE')) 
-    assert machine.get_current_state() == State('toasting')
+def test_state_transitions_to_target_state_and_enters_initial_substate(toaster): 
+    toaster.dispatch('DOOR_OPEN')
+    toaster.dispatch('DOOR_CLOSE')
+    assert toaster.isin('toasting')
 
 
-@pytest.mark.usefixtures('connect_entry_signals')
-def test_state_transitions_on_do_bake_event(machine): 
-    postman.send(event=Event('DO_BAKE')) 
-    assert machine.get_current_state() == State('baking') 
+def test_state_transitions_on_do_bake_event(toaster): 
+    toaster.dispatch('DO_BAKE')
+    assert toaster.isin('baking')
 
 
-@pytest.mark.usefixtures('connect_entry_signals')
-def test_state_transitions_on_do_toast_event(machine): 
-    postman.send(event=Event('DOOR_OPEN'))
-    postman.send(event=Event('DOOR_CLOSE'))
-    postman.send(event=Event('DO_BAKE')) 
-    postman.send(event=Event('DO_TOAST'))
-    assert machine.get_current_state() == State('toasting') 
+def test_state_transitions_on_do_toast_event(toaster): 
+    toaster.dispatch('DOOR_OPEN')
+    toaster.dispatch('DOOR_CLOSE')
+    toaster.dispatch('DO_BAKE') 
+    toaster.dispatch('DO_TOAST')
+    assert toaster.isin('toasting')
 
 
-@pytest.mark.usefixtures('machine')
-def test_entry_action_fires_on_entry_into_state(heater_on, arm_time_event, state_repository): 
-    # assert entry_signal.receivers
-    heater_on.assert_called()
-    toasting = state_repository.get('toasting')
-    arm_time_event.assert_called_with(toasting, toast_color=3)
+def test_entry_action_fires_on_entry_into_state(toaster): 
+    assert toaster.heater_on
+    assert toaster.timer_armed
+    assert toaster.arm_timer_for_toast_color == 3
