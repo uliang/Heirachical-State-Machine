@@ -7,11 +7,11 @@ import dataclasses
 class Toaster(Entity):
     toast_color:int 
     heater_on:bool = False 
-    arm_timer:bool = False
+    timer_armed:bool = False
     arm_timer_for_toast_color: int|None = None 
 
     def arm_timer_event(self, sender, **kwargs): 
-        self.arm_timer = True 
+        self.timer_armed = True 
         self.arm_timer_for_toast_color = self.toast_color
 
     def heater_on(self, sender, **kwargs): 
@@ -29,7 +29,7 @@ class Toaster(Entity):
 
 @pytest.fixture
 def toaster(): 
-    Toaster(toast_color=3) 
+    toaster = Toaster(toast_color=3) 
     toaster.start()
     yield toaster
     toaster.stop() 
