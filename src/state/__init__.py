@@ -1,10 +1,8 @@
 from __future__ import annotations
 import dataclasses
-from typing import Any, Callable 
+from typing import Callable, Type
 
-import blinker
 
-from state.events import Event 
 # from state.signals import update_repository
 
 UNHANDLED = 'UNHANDLED'
@@ -76,14 +74,14 @@ class State:
 class Transition: 
     source: State 
     dest: State 
-    _trigger: Event = dataclasses.field(init=False) 
+    # _trigger: Event = dataclasses.field(init=False) 
 
     def do_transition(self, machine) -> State: 
         tree = machine._state_tree
         lca = tree.get_lca(self.source, self.dest)
         machine.set_current_state(self.dest)
 
-    def add_trigger(self, trigger:Event): 
+    def add_trigger(self, trigger): 
         self._trigger = trigger
 
 
@@ -212,8 +210,21 @@ class Tree:
 #         walk(transition.source, register_transition)
 
 
-class EntityMeta(type): 
+class StateConfig: 
+    ...
+
+def setup_state_machine(config:Type[StateConfig]):
     ... 
+
+    
+class EntityMeta(type): 
+    def __new__(cls, name, bases, namespace, **kwargs): 
+        namespace = dict(namespace)
+        if 'StateConfig' in namespace:
+            stateconfig = namespace.pop('StateConfig') 
+            setup_state_machine(stateconfig)
+        klass = super().__new__(cls, name, bases, namespace)
+        return klass 
 
 
 class Entity(metaclass=EntityMeta): 
