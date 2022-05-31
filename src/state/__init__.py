@@ -1,6 +1,10 @@
 from __future__ import annotations
 import dataclasses
-from typing import Callable, Type
+import functools
+from typing import Type
+
+from state.tree import Tree
+from state.signals import ADD_NODE
 
 
 # from state.signals import update_repository
@@ -27,7 +31,7 @@ ROOT = 'ROOT'
 UNSET = 'UNSET'
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass
 class State: 
     on_entry: str = UNSET
     initial: bool|None = None 
@@ -84,33 +88,6 @@ class Transition:
     def add_trigger(self, trigger): 
         self._trigger = trigger
 
-
-class Tree: 
-    _vertices: list[State] = dataclasses.field(
-        default_factory=list) 
-    _edges:list[tuple[State, State]] = dataclasses.field(
-        default_factory=list) 
-   
-    def children(self, this_node:State) -> list[State]: 
-        return [child for parent, child in self._edges 
-            if parent == this_node 
-            and child.depth > this_node.depth]
-
-    def parent(self, this_node: State) -> State: 
-        return next(parent for parent,child in self._edges
-            if child == this_node 
-            and parent.depth < this_node.depth)
-
-    def leaf(self, this_node: State) -> bool: 
-        return not bool(self.children(this_node))
-
-    def get_lca(self, source:State, dest:State)-> State: 
-        ... 
-
-    def walk(self, node:State, callback:Callable[[State], None]): 
-        callback(node) 
-        for child in self.children(node): 
-            self.walk(child, callback)
 
 
 #@dataclasses.dataclass
@@ -210,24 +187,48 @@ class Tree:
 #         walk(transition.source, register_transition)
 
 
+
+def add_node(node:State, *, name:str,  tree:Tree[State]): 
+    tree._vertices[name] = node 
+    parent_name = node.substate_of
+    parent = tree._vertices[parent_name] 
+    tree._edges.append((parent, node))
+
+
 class StateConfig: 
     ...
 
+
 def setup_state_machine(config:Type[StateConfig]):
-    ... 
+    for name in dir(config):
+        classvar = getattr(config, name)
+        match classvar: 
+            case State(on_entry=handle_entry, initial=initial, substate_of=parent, 
+                       on=transition_object): 
+                ADD_NODE.send(classvar, name=name)
+            case _: 
+                pass
 
     
 class EntityMeta(type): 
-    def __new__(cls, name, bases, namespace, **kwargs): 
+    def __new__(cls, name, bases, namespace, *, repo_class=None,  **kwargs): 
         namespace = dict(namespace)
+        klass = super().__new__(cls, name, bases, namespace, **kwargs)
+        if repo_class: 
+            repo = repo_class()
+            ADD_NODE.connect(functools.partial(add_node, tree=repo))
+            return klass
         if 'StateConfig' in namespace:
             stateconfig = namespace.pop('StateConfig') 
             setup_state_machine(stateconfig)
-        klass = super().__new__(cls, name, bases, namespace)
         return klass 
 
 
-class Entity(metaclass=EntityMeta): 
+class StateRepository(Tree[State]): 
+    ... 
+
+
+class Entity(metaclass=EntityMeta, repo_class=StateRepository): 
     def isin(self, state_key:str)-> bool: 
         ...
 
