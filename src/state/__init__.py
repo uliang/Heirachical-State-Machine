@@ -3,6 +3,8 @@ import dataclasses
 import functools
 from typing import Callable, Type
 
+import blinker
+
 from state.tree import Tree
 from state.signals import ADD_NODE
 
@@ -187,14 +189,6 @@ class Transition:
 #         walk(transition.source, register_transition)
 
 
-
-def add_node(node:State, *, name:str,  tree:Tree[State]): 
-    tree._vertices[name] = node 
-    parent_name = node.substate_of
-    parent = tree._vertices[parent_name] 
-    tree._edges.append((parent, node))
-
-
 class StateConfig: 
     ...
 
@@ -211,12 +205,12 @@ def setup_state_machine(config:Type[StateConfig]):
 
     
 class EntityMeta(type): 
-    def __new__(cls, name, bases, namespace, *, repoclass=None,  **kwargs): 
+    def __new__(cls, name, bases, namespace, repoclass=None,  **kwargs): 
         namespace = dict(namespace)
-        klass = super().__new__(cls, name, bases, namespace, **kwargs)
+        klass = super().__new__(cls, name, bases, namespace)
         if repoclass: 
-            repoclass(add_node)
-            return klass
+            add_node_signal = kwargs.pop('add_node_signal')
+            repoclass(add_node_signal)
         if 'StateConfig' in namespace:
             stateconfig = namespace.pop('StateConfig') 
             setup_state_machine(stateconfig)
@@ -224,11 +218,19 @@ class EntityMeta(type):
 
 
 class StateRepository(Tree[State]): 
-    def __init__(self, tree_constructor): 
-        ADD_NODE.connect(functools.partial(tree_constructor, tree=self))
+    def __init__(self, add_node_signal:blinker.Signal): 
+        super().__init__()
+        add_node_signal.connect(self.add_node)
+
+    def add_node(self, node:State, *, name:str): 
+        self._vertices[name] = node 
+        parent_name = node.substate_of
+        parent = self._vertices[parent_name] 
+        self._edges.append((parent, node))
 
 
-class Entity(metaclass=EntityMeta, repoclass=StateRepository): 
+class Entity(metaclass=EntityMeta, repoclass=StateRepository, 
+             add_node_signal=ADD_NODE): 
     def isin(self, state_key:str)-> bool: 
         ...
 
