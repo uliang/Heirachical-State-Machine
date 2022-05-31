@@ -1,7 +1,7 @@
 from __future__ import annotations
 import dataclasses
 import functools
-from typing import Type
+from typing import Callable, Type
 
 from state.tree import Tree
 from state.signals import ADD_NODE
@@ -211,12 +211,11 @@ def setup_state_machine(config:Type[StateConfig]):
 
     
 class EntityMeta(type): 
-    def __new__(cls, name, bases, namespace, *, repo_class=None,  **kwargs): 
+    def __new__(cls, name, bases, namespace, *, repoclass=None,  **kwargs): 
         namespace = dict(namespace)
         klass = super().__new__(cls, name, bases, namespace, **kwargs)
-        if repo_class: 
-            repo = repo_class()
-            ADD_NODE.connect(functools.partial(add_node, tree=repo))
+        if repoclass: 
+            repoclass(add_node)
             return klass
         if 'StateConfig' in namespace:
             stateconfig = namespace.pop('StateConfig') 
@@ -225,10 +224,11 @@ class EntityMeta(type):
 
 
 class StateRepository(Tree[State]): 
-    ... 
+    def __init__(self, tree_constructor): 
+        ADD_NODE.connect(functools.partial(tree_constructor, tree=self))
 
 
-class Entity(metaclass=EntityMeta, repo_class=StateRepository): 
+class Entity(metaclass=EntityMeta, repoclass=StateRepository): 
     def isin(self, state_key:str)-> bool: 
         ...
 
