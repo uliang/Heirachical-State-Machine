@@ -197,9 +197,9 @@ def setup_state_machine(config:Type[StateConfig]):
     for name in dir(config):
         classvar = getattr(config, name)
         match classvar: 
-            case State(on_entry=handle_entry, initial=initial, substate_of=parent, 
-                       on=transition_object): 
-                ADD_NODE.send(classvar, name=name)
+            case State(on_entry=handle_entry, initial=initial,  
+                       substate_of=parent, on=transition_object): 
+                ADD_STATE.send(classvar, name=name)
             case _: 
                 pass
 
@@ -209,8 +209,8 @@ class EntityMeta(type):
         namespace = dict(namespace)
         klass = super().__new__(cls, name, bases, namespace)
         if repoclass: 
-            add_node_signal = kwargs.pop('add_node_signal')
-            repoclass(add_node_signal)
+            add_state_signal = kwargs.pop('add_state_signal')
+            repoclass(add_state_signal)
         if 'StateConfig' in namespace:
             stateconfig = namespace.pop('StateConfig') 
             setup_state_machine(stateconfig)
@@ -230,7 +230,7 @@ class StateRepository(Tree[State]):
 
 
 class Entity(metaclass=EntityMeta, repoclass=StateRepository, 
-             add_node_signal=ADD_NODE): 
+             add_state_signal=ADD_STATE): 
     def isin(self, state_key:str)-> bool: 
         ...
 
