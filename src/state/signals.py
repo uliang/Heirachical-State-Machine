@@ -2,4 +2,4 @@
 import blinker
 
 
-ADD_NODE = blinker.Signal('Emitted when node is to be added to the repository tree')   
+ADD_STATE = blinker.Signal('Emitted when state is to be added to the repository tree')   
