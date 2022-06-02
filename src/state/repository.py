@@ -1,16 +1,11 @@
-from typing import Protocol 
 from state.tree import Tree
 from state.model import State
-
-
-class ISignal(Protocol): 
-    def connect(self, receiver, sender=None): 
-        ... 
+from state.protocols import Connectable 
 
 
 class StateRepository(Tree[State]): 
-    def __init__(self, add_state_signal:ISignal,
-                 get_state_signal:ISignal, **kwargs:ISignal): 
+    def __init__(self, add_state_signal:Connectable,
+                 get_state_signal:Connectable, **kwargs:Connectable): 
         super().__init__()
         add_state_signal.connect(self.add_state)
         get_state_signal.connect(self.get_state)
