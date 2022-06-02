@@ -21,7 +21,7 @@ class RepositoryP(Protocol[T]):
         ... 
 
 
-def setup_state_machine(config:Type[StateConfig]):
+def setup_state_machine(sender:Type[EntityMeta], config:Type):
     for name in dir(config):
         classvar = getattr(config, name)
         match classvar: 
@@ -31,22 +31,10 @@ def setup_state_machine(config:Type[StateConfig]):
             case _: 
                 pass
 
-    
-class EntityMeta(type): 
-    def __new__(cls, name, bases, namespace, repoclass:RepositoryP[blinker.Signal]|None=None,
-                **kwargs:blinker.Signal): 
-        namespace = dict(namespace)
-        klass = super().__new__(cls, name, bases, namespace)
-        if repoclass: 
-            repoclass(**kwargs)
-        if 'StateConfig' in namespace:
-            stateconfig = namespace.pop('StateConfig') 
-            setup_state_machine(stateconfig)
-        return klass 
-
 
 @dataclass
 class Entity(metaclass=EntityMeta, repoclass=StateRepository, 
+             interpreter=setup_state_machine, 
              add_state_signal=ADD_STATE, 
              get_state_signal=GET_STATE): 
 
