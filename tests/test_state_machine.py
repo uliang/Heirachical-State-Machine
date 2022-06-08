@@ -1,6 +1,10 @@
+from unittest.mock import patch 
 import pytest
 from state import State, Entity
 import dataclasses
+from state.signals import ns, disconnect_signals_from  
+from state.repository import flush_state_database
+
 
 
 @dataclasses.dataclass
@@ -29,11 +33,38 @@ class Toaster(Entity):
 
 @pytest.fixture
 def toaster(): 
-    toaster = Toaster(toast_color=3) 
-    toaster.start()
-    yield toaster
-    toaster.stop() 
+    toaster_ = Toaster(toast_color=3) 
+    toaster_.start()
+    yield toaster_
+    flush_state_database() 
+    disconnect_signals_from(ns)
+    toaster_.stop() 
 
+@pytest.mark.skip
+@patch.object(Toaster, '_interpret')
+def test_interpreter_is_called(mock_interpreter): 
+    toaster = Toaster(toast_color=3) 
+    mock_interpreter.assert_called()
+
+def test_signal_connections(toaster): 
+    from state.signals import ADD_STATE, GET_STATE
+    assert bool(ADD_STATE.receivers) is True 
+    assert bool(GET_STATE.receivers) is True 
+
+def test_signal_disconnections(toaster): 
+    from state.signals import ADD_STATE, GET_STATE
+    disconnect_signals_from(ns) 
+    assert bool(ADD_STATE.receivers) is False 
+    assert bool(GET_STATE.receivers) is False 
+    
+def test_repository_database_is_not_empty_after_state_machine_init(toaster): 
+    assert bool(toaster._repo._database) 
+
+def test_repository_database_is_empty_after_flushing(toaster):
+    flush_state_database()
+    assert bool(toaster._repo._database) is False
+    
+    
 def test_state_machine_starts_in_initial_state(toaster):
     assert toaster.isin('toasting')
 
