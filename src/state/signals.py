@@ -1,8 +1,14 @@
 
 import blinker
 
+ns = blinker.Namespace() 
 
-ADD_STATE = blinker.Signal('Emitted when state is to be added to the repository tree')   
-GET_STATE = blinker.Signal('Emiited when state is queried with state_id')
-INTERPRET_STATE_MACHINE_CONFIG = blinker.Signal(
-        'Emitted when metaclass needs to initialize the state machine.')
+ADD_STATE = ns.signal('Emitted when state is to be added to the repository tree')   
+GET_STATE = ns.signal('Emiited when state is queried with state_id')
+FLUSH_DATABASE = ns.signal('Emitted when state database needs to be emptied')
+
+def disconnect_signals_from(namespace: blinker.Namespace): 
+    for signal in namespace.values(): 
+        for receiver in signal.receivers_for(blinker.ANY): 
+            signal.disconnect(receiver)
+

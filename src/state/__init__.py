@@ -1,32 +1,33 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Type 
+from typing import ClassVar 
 
 from state.signals import ADD_STATE, GET_STATE
 from state.model import State
 from state.repository import StateRepository
-from state.meta import EntityMeta
-
-
-
-def setup_state_machine(sender:Type[EntityMeta], config:Type):
-    for name in dir(config):
-        classvar = getattr(config, name)
-        match classvar: 
-            case State(on_entry=handle_entry, initial=initial,  
-                       substate_of=parent, on=transition_object): 
-                ADD_STATE.send(classvar, name=name)
-            case _: 
-                pass
 
 
 @dataclass
-class Entity(metaclass=EntityMeta, repoclass=StateRepository, 
-             interpreter=setup_state_machine, 
-             add_state_signal=ADD_STATE, 
-             get_state_signal=GET_STATE): 
+class Entity:  
+    _current_state:State|None = field(default=None, init=False)
 
-    _current_state:State = field(default=None, init=False)
+    _repo:ClassVar[StateRepository] = StateRepository.with_connections()
+    _config_classname:ClassVar[str] = 'StateConfig' 
+
+    def _interpret(self): 
+        entityname = self.__class__.__name__ 
+        config = getattr(self, self._config_classname)
+        for name in dir(config):
+            classvar = getattr(config, name)
+            match classvar: 
+                case State(on_entry=handle_entry, initial=initial,  
+                           substate_of=parent, on=transition_object): 
+                    ADD_STATE.send(classvar, entity_name=entityname, name=name)
+                case _: 
+                    pass
+
+    def __post_init__(self): 
+        self._interpret() 
 
     def isin(self, state_id:str)-> bool: 
         return self._current_state == GET_STATE.send(self, name=state_id)     
@@ -39,5 +40,7 @@ class Entity(metaclass=EntityMeta, repoclass=StateRepository,
 
     def stop(self): 
         ... 
+
+    class StateConfig:  pass  
 
 

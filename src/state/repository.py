@@ -1,22 +1,38 @@
+from collections import defaultdict
+from dataclasses import dataclass, field
+from state.signals import ADD_STATE, GET_STATE, FLUSH_DATABASE
 from state.tree import Tree
 from state.model import State
-from state.protocols import Connectable 
 
 
-class StateRepository(Tree[State]): 
-    def __init__(self, add_state_signal:Connectable,
-                 get_state_signal:Connectable, **kwargs:Connectable): 
-        super().__init__()
-        add_state_signal.connect(self.add_state)
-        get_state_signal.connect(self.get_state)
+@dataclass
+class StateRepository: 
 
-    def add_state(self, state:State, *, name:str): 
-        self._vertices[name] = state 
-        parent_name = state.substate_of
-        parent = self._vertices[parent_name] 
-        self._edges.append((parent, state))
+    _database: dict[str, Tree[State]] = field(default=None, init=False)
+   
+    def __post_init__(self): 
+        self._database = defaultdict(Tree) 
 
-    def get_state(self, sender, *, name:str): 
-        return self._vertices[name]
+    @classmethod 
+    def with_connections(cls): 
+        repo = cls()
+        ADD_STATE.connect(repo.add_state)
+        GET_STATE.connect(repo.get_state)        
+        FLUSH_DATABASE.connect(repo.flush)
+        return repo
 
+    def add_state(self, sender:State, /,  entity_name:str, name:str): 
+        tree = self._database[entity_name] 
+        tree._vertices[name] = sender 
+        parent_name = sender.substate_of
+        # parent = tree._vertices[parent_name] 
+        tree._edges.append((parent_name, name))
 
+    def get_state(self, sender, /, entity_name:str, name:str): 
+        return self._database[entity_name]._vertices[name]
+
+    def flush(self, sender, /):
+        self._database = {}
+
+def flush_state_database(): 
+    FLUSH_DATABASE.send()
