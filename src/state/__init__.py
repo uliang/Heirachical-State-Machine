@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import ClassVar 
 
-from state.signals import ADD_STATE, GET_STATE
+from state.signals import ENTRY, ADD_STATE, GET_STATE
 from state.model import State
 from state.repository import StateRepository
 
@@ -23,7 +23,12 @@ class Entity:
             match classvar: 
                 case State(on_entry=handle_entry, initial=initial,  
                            substate_of=parent, on=transition_object): 
+
                     ADD_STATE.send(classvar, entity_name=entityname, name=name)
+
+                    def noop(sender): pass 
+                    handler = getattr(self, handle_entry, noop) 
+                    ENTRY.connect(handler, classvar)
                 case _: 
                     pass
 
@@ -31,7 +36,8 @@ class Entity:
         self._interpret() 
 
     def isin(self, state_id:str)-> bool: 
-        return self._current_state == GET_STATE.send(self, name=state_id)     
+        return self._current_state == \
+                GET_STATE.send(self, name=state_id, entity_name=self.name)     
 
     def dispatch(self, trigger:str): 
         ... 
