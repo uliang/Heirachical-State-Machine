@@ -18,11 +18,11 @@ class Toaster(Entity):
         self.timer_armed = True 
         self.arm_timer_for_toast_color = self.toast_color
 
-    def heater_on(self, sender, **kwargs): 
+    def switch_heater_on(self, sender, **kwargs): 
         self.heater_on = True 
 
     class StateConfig: 
-        heating = State(initial=True, on_entry='heater_on', 
+        heating = State(initial=True, on_entry='switch_heater_on', 
                         on={'DO_BAKE': 'baking', 
                             'DO_TOAST': 'toasting', 
                             'DOOR_OPEN': 'door_open'})   
@@ -40,30 +40,30 @@ def toaster():
     disconnect_signals_from(ns)
     toaster_.stop() 
 
-@pytest.mark.skip
+#@pytest.mark.skip
 @patch.object(Toaster, '_interpret')
 def test_interpreter_is_called(mock_interpreter): 
-    toaster = Toaster(toast_color=3) 
+    toaster = Toaster('toaster', toast_color=3) 
     mock_interpreter.assert_called()
 
-@pytest.mark.skip
+#@pytest.mark.skip
 def test_signal_connections(toaster): 
     from state.signals import ADD_STATE, GET_STATE
     assert bool(ADD_STATE.receivers) is True 
     assert bool(GET_STATE.receivers) is True 
 
-@pytest.mark.skip
+#@pytest.mark.skip
 def test_signal_disconnections(toaster): 
     from state.signals import ADD_STATE, GET_STATE
     disconnect_signals_from(ns) 
     assert bool(ADD_STATE.receivers) is False 
     assert bool(GET_STATE.receivers) is False 
     
-@pytest.mark.skip
+#@pytest.mark.skip
 def test_repository_database_is_not_empty_after_state_machine_init(toaster): 
     assert bool(toaster._repo._database) 
 
-@pytest.mark.skip
+#@pytest.mark.skip
 def test_repository_database_is_empty_after_flushing(toaster):
     flush_state_database()
     assert bool(toaster._repo._database) is False
@@ -108,7 +108,14 @@ def test_get_lca_method_on_tree_ancestor(toaster):
     lca = tree.get_lca('baking', 'ROOT') 
     assert lca == Vertex('ROOT')
     
+def test_entry_handler_is_called_when_entry_signal_is_emitted(toaster): 
+    from state.signals import ENTRY, GET_STATE 
+    _, heating_state = GET_STATE.send(entity_name='toaster', name='heating')[0]
+    ENTRY.send(heating_state)
     
+    assert toaster.heater_on
+
+
 def test_state_machine_starts_in_initial_state(toaster):
     assert toaster.isin('toasting')
 
