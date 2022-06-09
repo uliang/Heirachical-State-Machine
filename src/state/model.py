@@ -14,13 +14,3 @@ class State:
     substate_of: str = ROOT 
     on: dict[str, str] = dataclasses.field(default_factory=dict)
 
-    depth: int = dataclasses.field(default=0, 
-        compare=False, 
-        init=False, 
-        repr=True)
-    
-    def should_initially_enter(self) -> bool: 
-        return False
-
-    def __eq__(self, other:State)-> bool: 
-        return self.name == other.name
