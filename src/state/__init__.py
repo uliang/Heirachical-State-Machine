@@ -9,13 +9,14 @@ from state.repository import StateRepository
 
 @dataclass
 class Entity:  
+    name: str 
     _current_state:State|None = field(default=None, init=False)
 
-    _repo:ClassVar[StateRepository] = StateRepository.with_connections()
+    _repo:StateRepository =field(default_factory=StateRepository.with_connections,init=False) 
     _config_classname:ClassVar[str] = 'StateConfig' 
 
     def _interpret(self): 
-        entityname = self.__class__.__name__ 
+        entityname = self.name
         config = getattr(self, self._config_classname)
         for name in dir(config):
             classvar = getattr(config, name)
