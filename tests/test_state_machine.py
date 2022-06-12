@@ -116,6 +116,13 @@ def test_entry_handler_is_called_when_entry_signal_is_emitted(toaster):
     assert toaster.heater_on
 
 
+def test_event_signals_do_connect(toaster): 
+    from state.signals import ns 
+    assert bool(ns.signal('DO_BAKE').receivers)
+    assert bool(ns.signal('DO_TOAST').receivers)
+    assert bool(ns.signal('DOOR_OPEN').receivers)
+    assert bool(ns.signal('DOOR_CLOSE').receivers)
+
 def test_state_machine_starts_in_initial_state(toaster):
     assert toaster.isin('toasting')
 
