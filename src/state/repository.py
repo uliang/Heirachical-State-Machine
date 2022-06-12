@@ -1,6 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
-from state.signals import ADD_STATE, GET_STATE, FLUSH_DATABASE
+from functools import partial
+from state.signals import ADD_STATE, FLUSH_DATABASE
 from state.tree import Tree
 from state.model import State
 
@@ -8,28 +9,20 @@ from state.model import State
 @dataclass
 class StateRepository: 
 
-    _database: dict[str, Tree[State]] = field(default=None, init=False)
+    _database: dict[str, Tree[State]] = field(default_factory=partial(defaultdict, Tree), init=False)
    
-    def __post_init__(self): 
-        self._database = defaultdict(Tree) 
+    def connect_signals(self): 
+        FLUSH_DATABASE.connect(self.flush)
 
-    @classmethod 
-    def with_connections(cls): 
-        repo = cls()
-        ADD_STATE.connect(repo.insert)
-        GET_STATE.connect(repo.get)        
-        FLUSH_DATABASE.connect(repo.flush)
-        return repo
-
-    def insert(self, sender:State, /,  entity_name:str, name:str): 
+    def insert(self, entity_name:str,/, name:str, state:State): 
         tree = self._database[entity_name] 
-        tree.add_vertex(sender, name, parent_name=sender.substate_of)
+        tree.add_vertex(state, name, parent_name=state.substate_of)
 
-    def get(self, sender, /, entity_name:str, name:str): 
+    def get(self, entity_name:str,/,  name:str): 
         return self._database[entity_name][name].data
 
     def flush(self, sender, /):
-        self._database = {}
+        self._database = defaultdict(Tree) 
 
 def flush_state_database(): 
     FLUSH_DATABASE.send()

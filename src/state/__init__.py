@@ -17,8 +17,7 @@ class Entity:
     name: str 
     _current_state:State|None = field(default=None, init=False)
 
-    _repo:StateRepository =field(default_factory=StateRepository.with_connections,
-                                init=False, repr=False) 
+    _repo:ClassVar[StateRepository] = StateRepository()
     _config_classname:ClassVar[str] = 'StateConfig' 
 
     def _interpret(self): 
@@ -32,7 +31,7 @@ class Entity:
                            substate_of=parent, on=transition_object): 
 
                     this_state = classvar
-                    ADD_STATE.send(this_state, entity_name=entityname, name=name)
+                    self._repo.insert(self.name, name=name, state=this_state)
 
                     handler = getattr(self, handle_entry, NOOP) 
                     ENTRY.connect(handler, this_state)
@@ -44,18 +43,19 @@ class Entity:
         for this_state_name, transition_object in saved_transition_configs.items(): 
             for signal_name, next_state_name in transition_object.items(): 
                 signal = ns.signal(signal_name)
-                source_ = self._repo.get(self, entity_name=entityname, name=this_state_name)
-                dest = self._repo.get(self, entity_name=entityname, name=next_state_name)
+                source_ = self._repo.get(self.name, name=this_state_name)
+                dest = self._repo.get(self.name, name=next_state_name)
                 transition = Transition(source_, dest)
                 signal.connect(transition, source_, weak=False)
                 # breakpoint()
 
     def __post_init__(self): 
+        self._repo.connect_signals()
         self._interpret() 
 
     def isin(self, state_id:str)-> bool: 
         return self._current_state == \
-                GET_STATE.send(self, name=state_id, entity_name=self.name)     
+            self._repo.get(self.name, name=state_id)
 
     def dispatch(self, trigger:str): 
         ... 
