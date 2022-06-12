@@ -46,20 +46,6 @@ def test_interpreter_is_called(mock_interpreter):
     toaster = Toaster('toaster', toast_color=3) 
     mock_interpreter.assert_called()
 
-#@pytest.mark.skip
-def test_signal_connections(toaster): 
-    from state.signals import ADD_STATE, GET_STATE
-    assert bool(ADD_STATE.receivers) is True 
-    assert bool(GET_STATE.receivers) is True 
-
-#@pytest.mark.skip
-def test_signal_disconnections(toaster): 
-    from state.signals import ADD_STATE, GET_STATE
-    disconnect_signals_from(ns) 
-    assert bool(ADD_STATE.receivers) is False 
-    assert bool(GET_STATE.receivers) is False 
-    
-#@pytest.mark.skip
 def test_repository_database_is_not_empty_after_state_machine_init(toaster): 
     assert bool(toaster._repo._database) 
 
@@ -109,8 +95,8 @@ def test_get_lca_method_on_tree_ancestor(toaster):
     assert lca == Vertex('ROOT')
     
 def test_entry_handler_is_called_when_entry_signal_is_emitted(toaster): 
-    from state.signals import ENTRY, GET_STATE 
-    _, heating_state = GET_STATE.send(entity_name='toaster', name='heating')[0]
+    from state.signals import ENTRY
+    heating_state = toaster._repo.get(toaster.name, name='heating')
     ENTRY.send(heating_state)
     
     assert toaster.heater_on
