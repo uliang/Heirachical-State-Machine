@@ -7,11 +7,5 @@ class Transition:
     source: State 
     dest: State 
 
-    def do_transition(self, machine) -> State: 
-        tree = machine._state_tree
-        lca = tree.get_lca(self.source, self.dest)
-        machine.set_current_state(self.dest)
-
-    def add_trigger(self, trigger): 
-        self._trigger = trigger
-
+    def __call__(self, sender:State, **kwargs) -> State: 
+        ...
