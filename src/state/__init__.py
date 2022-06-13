@@ -23,7 +23,7 @@ class Entity:
 
     def _interpret(self): 
         config = getattr(self, self._config_classname)
-        saved_transition_configs = {}
+        saved_transition_configs = []
         for name in dir(config):
             classvar = getattr(config, name)
             match classvar: 
@@ -36,18 +36,18 @@ class Entity:
                     handler = getattr(self, handle_entry, NOOP) 
                     ENTRY.connect(handler, this_state)
 
-                    saved_transition_configs[name] = transition_object
+                    transition_configs = [(name, signal_name, next_state_name) for 
+                            signal_name, next_state_name in transition_object.items()]
+                    saved_transition_configs.extend(transition_configs)
                 case _: 
                     pass
 
-        for this_state_name, transition_object in saved_transition_configs.items(): 
-            for signal_name, next_state_name in transition_object.items(): 
-                signal = ns.signal(signal_name)
-                source_ = self._repo.get(self.name, name=this_state_name)
-                dest = self._repo.get(self.name, name=next_state_name)
-                transition = Transition(source_, dest)
-                signal.connect(transition, source_, weak=False)
-                # breakpoint()
+        for this_state_name, signal_name, next_state_name in saved_transition_configs: 
+            signal = ns.signal(signal_name)
+            source_ = self._repo.get(self.name, name=this_state_name)
+            dest = self._repo.get(self.name, name=next_state_name)
+            transition = Transition(source_, dest)
+            signal.connect(transition, source_, weak=False)
 
     def __post_init__(self): 
         self._interpret() 
