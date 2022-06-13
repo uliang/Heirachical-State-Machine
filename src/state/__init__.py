@@ -21,7 +21,6 @@ class Entity:
     _config_classname:ClassVar[str] = 'StateConfig' 
 
     def _interpret(self): 
-        entityname = self.name
         config = getattr(self, self._config_classname)
         saved_transition_configs = {}
         for name in dir(config):
