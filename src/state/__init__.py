@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import ClassVar 
 
-from state.signals import ENTRY
+from state.signals import ENTRY, INITIALLY_TRANSITION
 from state.model import State
 from state.repository import StateRepository
 from state.signals import ns
@@ -39,6 +39,11 @@ class Entity:
                     transition_configs = [(name, signal_name, next_state_name) for 
                             signal_name, next_state_name in transition_object.items()]
                     saved_transition_configs.extend(transition_configs)
+
+                    if initial:
+                        parent_state = self._repo.get(self.name, name=parent)
+                        initial_transition = Transition(parent_state, dest=this_state)
+                        INITIALLY_TRANSITION.connect(initial_transition,parent_state, weak=False) 
                 case _: 
                     pass
 
