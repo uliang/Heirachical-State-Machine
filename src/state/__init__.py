@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import ClassVar 
 
-from state.signals import ENTRY, ADD_STATE, GET_STATE
+from state.signals import ENTRY
 from state.model import State
 from state.repository import StateRepository
 from state.signals import ns
@@ -49,7 +49,6 @@ class Entity:
                 # breakpoint()
 
     def __post_init__(self): 
-        self._repo.connect_signals()
         self._interpret() 
 
     def isin(self, state_id:str)-> bool: 
@@ -63,7 +62,7 @@ class Entity:
         ... 
 
     def stop(self): 
-        ... 
+        ...
 
     class StateConfig:  pass  
 
