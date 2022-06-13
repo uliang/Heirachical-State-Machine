@@ -3,7 +3,6 @@ import pytest
 from state import State, Entity
 import dataclasses
 from state.signals import ns, disconnect_signals_from  
-from state.repository import flush_state_database
 
 
 
@@ -36,9 +35,9 @@ def toaster():
     toaster_ = Toaster('toaster', toast_color=3) 
     toaster_.start()
     yield toaster_
-    flush_state_database() 
     disconnect_signals_from(ns)
     toaster_.stop() 
+    toaster_._repo.flush()
 
 #@pytest.mark.skip
 @patch.object(Toaster, '_interpret')
@@ -48,13 +47,7 @@ def test_interpreter_is_called(mock_interpreter):
 
 def test_repository_database_is_not_empty_after_state_machine_init(toaster): 
     assert bool(toaster._repo._database) 
-
-#@pytest.mark.skip
-def test_repository_database_is_empty_after_flushing(toaster):
-    flush_state_database()
-    assert bool(toaster._repo._database) is False
     
-
 def test_child_method_on_tree(toaster): 
     from state.tree import Vertex
     tree = toaster._repo._database['toaster'] 
