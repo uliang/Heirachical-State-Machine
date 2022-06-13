@@ -1,4 +1,4 @@
-from unittest.mock import patch 
+from unittest.mock import patch
 import pytest
 from state import State, Entity
 import dataclasses
@@ -39,7 +39,21 @@ def toaster():
     toaster_.stop() 
     toaster_._repo.flush()
 
-#@pytest.mark.skip
+def test_initial_transition_is_connected(toaster): 
+    from state.signals import INITIALLY_TRANSITION 
+    assert bool(INITIALLY_TRANSITION.receivers) 
+
+    root_state = toaster._repo.get('toaster', name='ROOT')
+    heating_state = toaster._repo.get('toaster', name='heating')
+    transition = next(INITIALLY_TRANSITION.receivers_for(root_state))
+    
+    assert transition.dest == heating_state 
+
+    toasting_state = toaster._repo.get('toaster', name='toasting') 
+    transition = next(INITIALLY_TRANSITION.receivers_for(heating_state)) 
+
+    assert transition.dest == toasting_state
+
 @patch.object(Toaster, '_interpret')
 def test_interpreter_is_called(mock_interpreter): 
     toaster = Toaster('toaster', toast_color=3) 
