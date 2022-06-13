@@ -7,6 +7,7 @@ from state.model import State
 from state.repository import StateRepository
 from state.signals import ns
 from state.transitions import Transition
+from state.protocols import Repository
 
 
 def NOOP(sender): pass 
@@ -17,7 +18,7 @@ class Entity:
     name: str 
     _current_state:State|None = field(default=None, init=False)
 
-    _repo:ClassVar[StateRepository] = StateRepository()
+    _repo:ClassVar[Repository[State]] = StateRepository()
     _config_classname:ClassVar[str] = 'StateConfig' 
 
     def _interpret(self): 
