@@ -3,8 +3,6 @@ import blinker
 
 ns = blinker.Namespace() 
 
-ADD_STATE = ns.signal('Emitted when state is to be added to the repository tree')   
-GET_STATE = ns.signal('Emiited when state is queried with state_id')
 ENTRY = ns.signal('Emitted when state is entered') 
 
 def disconnect_signals_from(namespace: blinker.Namespace): 
