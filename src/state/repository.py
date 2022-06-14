@@ -12,7 +12,7 @@ class StateRepository:
         default_factory=partial(defaultdict, Tree), init=False
     )
 
-    def insert(self, entity_name: str, /, name: str, parent_name:str) -> Vertex:
+    def insert(self, entity_name: str, /, name: str, parent_name: str) -> Vertex:
         tree = self._database[entity_name]
         return tree.add_vertex(name=name, parent_name=parent_name)
 

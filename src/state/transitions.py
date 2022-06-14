@@ -7,5 +7,5 @@ class Transition:
     source: Vertex
     dest: Vertex
 
-    def __call__(self, sender: Vertex, context, payload):  
+    def __call__(self, sender: Vertex, context, payload):
         ...

@@ -33,7 +33,9 @@ class Entity:
                     on=transition_object,
                 ):
 
-                    this_state = self._repo.insert(self.name, name=name, parent_name=parent)
+                    this_state = self._repo.insert(
+                        self.name, name=name, parent_name=parent
+                    )
 
                     handler = getattr(self, handle_entry, NOOP)
                     ENTRY.connect(handler, this_state)
@@ -43,7 +45,7 @@ class Entity:
                         next_state = self._repo.get(self.name, name=next_state_name)
                         transition = Transition(this_state, next_state)
                         signal.connect(transition, this_state, weak=False)
-                    
+
                     if initial:
                         parent_state = self._repo.get(self.name, name=parent)
                         initial_transition = Transition(parent_state, this_state)

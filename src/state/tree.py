@@ -31,7 +31,7 @@ class Tree(Generic[T]):
     def __post_init__(self):
         self._vertices = defaultdict(Vertex[T])
 
-    def add_vertex(self,  name: str, parent_name: str):
+    def add_vertex(self, name: str, parent_name: str):
         vertex = self._vertices[name]
         vertex.name = name
         vertex.parent = parent_name
