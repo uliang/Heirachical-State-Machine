@@ -23,7 +23,7 @@ class Toaster(Entity):
         heating = State(
             initial=True,
             on_entry="switch_heater_on",
-            on={"DO_BAKE": "baking", "DO_TOAST": "toasting", "DOOR_OPEN": "door_open"},
+            on={"DO_BAKE": "baking", "DO_TOAST": "toasting", "DOOR_OPEN": "door_open"}
         )
         toasting = State(
             initial=True,

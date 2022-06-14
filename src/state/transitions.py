@@ -1,11 +1,11 @@
 import dataclasses
-from state.model import State
+from state.tree import Vertex
 
 
 @dataclasses.dataclass
 class Transition:
-    source: State
-    dest: State
+    source: Vertex
+    dest: Vertex
 
-    def __call__(self, sender: State, **kwargs) -> State:
+    def __call__(self, sender: Vertex, context, payload):  
         ...
