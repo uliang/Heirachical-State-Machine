@@ -41,11 +41,11 @@ class Entity:
                     handler = getattr(self, handle_entry, NOOP)
                     ENTRY.connect(handler, this_state)
 
-                    transition_configs = [
-                        (name, signal_name, next_state_name)
-                        for signal_name, next_state_name in transition_object.items()
-                    ]
-                    saved_transition_configs.extend(transition_configs)
+                    for signal_name, next_state_name in transition_object.items():
+                        signal = ns.signal(signal_name)
+                        next_state = self._repo.get(self.name, name=next_state_name)
+                        transition = Transition(this_state, next_state)
+                        signal.connect(transition, this_state, weak=False)
 
                     if initial:
                         parent_state = self._repo.get(self.name, name=parent)
@@ -55,13 +55,6 @@ class Entity:
                         )
                 case _:
                     pass
-
-        for this_state_name, signal_name, next_state_name in saved_transition_configs:
-            signal = ns.signal(signal_name)
-            source_ = self._repo.get(self.name, name=this_state_name)
-            dest = self._repo.get(self.name, name=next_state_name)
-            transition = Transition(source_, dest)
-            signal.connect(transition, source_, weak=False)
 
     def __post_init__(self):
         self._interpret()
