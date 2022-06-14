@@ -6,6 +6,8 @@ from operator import attrgetter
 
 T = TypeVar("T")
 
+class VertextPointer(Generic[T]): 
+    ... 
 
 @dataclasses.dataclass
 class Vertex(Generic[T]):
