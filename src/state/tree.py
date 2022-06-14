@@ -8,6 +8,21 @@ T = TypeVar("T")
 
 
 @dataclasses.dataclass
+class VertexPointer(Generic[T]):
+    _head: list[T] = dataclasses.field(default_factory=list)
+
+    def set_head(self, name: str | list[str]):
+        self._head = []
+        match name:
+            case str(name):
+                self._head.append(name)
+            case [*names]:
+                self._head.extend(names)
+            case _:
+                pass
+
+
+@dataclasses.dataclass
 class Vertex(Generic[T]):
     name: str = ""
     children: list[str] = dataclasses.field(default_factory=list)
