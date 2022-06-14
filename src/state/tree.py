@@ -7,19 +7,19 @@ from operator import attrgetter
 T = TypeVar("T")
 
 
-@dataclasses.dataclass 
-class VertextPointer(Generic[T]):
+@dataclasses.dataclass
+class VertexPointer(Generic[T]):
     _head: list[T] = dataclasses.field(default_factory=list)
 
-    def set_head(self, name:str|list[str]):
-        self._head = [] 
+    def set_head(self, name: str | list[str]):
+        self._head = []
         match name:
-            case str(name): 
-                self._head.append(name) 
-            case [*names] : 
+            case str(name):
+                self._head.append(name)
+            case [*names]:
                 self._head.extend(names)
-            case _: 
-                pass 
+            case _:
+                pass
 
 
 @dataclasses.dataclass
