@@ -1,26 +1,25 @@
-from typing import (Protocol, ClassVar, Callable, 
-                    TypeVar)
+from typing import Protocol, ClassVar, Callable, TypeVar
 
 
-T = TypeVar('T') 
+T = TypeVar("T")
 
 
-class Connectable(Protocol): 
-    def connect(self, receiver, sender=None): 
-        ... 
-
-
-class ConfigMetaSpec(Protocol): 
-    config_classname:ClassVar[str]
-    interpreter:ClassVar[Callable]
-
-class Repository(Protocol[T]): 
-    def insert(self, entity_name:str,/,name:str, state:T):
+class Connectable(Protocol):
+    def connect(self, receiver, sender=None):
         ...
 
-    def get(self, entity_name:str, /, name:str) -> T: 
-        ... 
 
-    def flush(self): 
-        ... 
-    
+class ConfigMetaSpec(Protocol):
+    config_classname: ClassVar[str]
+    interpreter: ClassVar[Callable]
+
+
+class Repository(Protocol[T]):
+    def insert(self, entity_name: str, /, name: str, state: T):
+        ...
+
+    def get(self, entity_name: str, /, name: str) -> T:
+        ...
+
+    def flush(self):
+        ...
