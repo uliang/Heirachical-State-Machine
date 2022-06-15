@@ -8,8 +8,8 @@ T = TypeVar("T")
 
 
 @dataclasses.dataclass
-class VertexPointer(Generic[T]):
-    _head: list[T] = dataclasses.field(default_factory=list)
+class VertexPointer:
+    _head: list[str] = dataclasses.field(default_factory=list)
 
     def set_head(self, name: str | list[str]):
         self._head = []
@@ -23,12 +23,11 @@ class VertexPointer(Generic[T]):
 
 
 @dataclasses.dataclass
-class Vertex(Generic[T]):
+class Vertex:
     name: str = ""
     children: list[str] = dataclasses.field(default_factory=list)
     parent: str = "UNSET"
     depth: int = 0
-    data: T | None = None
 
     def __eq__(self, other) -> bool:
         return other.name == self.name
@@ -38,13 +37,13 @@ class Vertex(Generic[T]):
 
 
 @dataclasses.dataclass
-class Tree(Generic[T]):
-    _vertices: dict[str, Vertex[T]] = dataclasses.field(default_factory=dict)
+class Tree:
+    _vertices: dict[str, Vertex] = dataclasses.field(default_factory=dict)
 
-    _euler_tour: list[Vertex[T]] = dataclasses.field(default_factory=list, init=False)
+    _euler_tour: list[Vertex] = dataclasses.field(default_factory=list, init=False)
 
     def __post_init__(self):
-        self._vertices = defaultdict(Vertex[T])
+        self._vertices = defaultdict(Vertex)
 
     def add_vertex(self, name: str, parent_name: str):
         vertex = self._vertices[name]
@@ -55,21 +54,21 @@ class Tree(Generic[T]):
         parent_vertex.children.append(name)
         return vertex
 
-    def __getitem__(self, name: str) -> Vertex[T]:
+    def __getitem__(self, name: str) -> Vertex:
         return self._vertices[name]
 
-    def children(self, name: str) -> list[Vertex[T]]:
+    def children(self, name: str) -> list[Vertex]:
         vertex = self[name]
         return [self[child_name] for child_name in vertex.children]
 
-    def parent(self, name: str) -> Vertex[T]:
+    def parent(self, name: str) -> Vertex:
         vertex = self[name]
         return self[vertex.parent]
 
     def leaf(self, name: str) -> bool:
         return not bool(self.children(name))
 
-    def get_lca(self, source: str, dest: str) -> Vertex[T]:
+    def get_lca(self, source: str, dest: str) -> Vertex:
         if not self._euler_tour:
             visited = [Vertex("ROOT")]
 
@@ -91,7 +90,7 @@ class Tree(Generic[T]):
         lca_node = min(subarray, key=attrgetter("depth"))
         return lca_node
 
-    def dfs(self, name: str, callback: Callable[[Vertex[T]], None]):
+    def dfs(self, name: str, callback: Callable[[Vertex], None]):
         callback(self[name])
         for child_id in self[name].children:
             self.dfs(child_id, callback)

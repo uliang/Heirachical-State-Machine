@@ -8,7 +8,7 @@ from state.model import State
 @dataclass
 class StateRepository:
 
-    _database: dict[str, Tree[State]] = field(
+    _database: dict[str, Tree] = field(
         default_factory=partial(defaultdict, Tree), init=False
     )
 
