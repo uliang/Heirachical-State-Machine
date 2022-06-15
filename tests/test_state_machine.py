@@ -44,6 +44,13 @@ def toaster():
     toaster_._repo.flush()
 
 
+def test_vertexpointer_points_to_method(toaster): 
+    from state.tree import VertexPointer 
+    tree = toaster._repo._database['toaster'] 
+    vp = VertexPointer() 
+    vp.set_head(tree['ROOT'].name) 
+    assert vp.points_to('ROOT')
+
 def test_initial_transition_is_connected(toaster):
     from state.signals import INITIALLY_TRANSITION
 
