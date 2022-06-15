@@ -8,6 +8,7 @@ from state.model import State
 from state.repository import StateRepository
 from state.transitions import Transition
 from state.protocols import Repository
+from state.tree import VertexPointer
 
 
 def NOOP(sender):
@@ -17,7 +18,7 @@ def NOOP(sender):
 @dataclass
 class Entity:
     name: str
-    _current_state: State | None = field(default=None, init=False)
+    _current_state:VertexPointer = field(init=False, repr=False, default_factory=VertexPointer) 
 
     _repo: ClassVar[Repository[State]] = StateRepository()
     _config_classname: ClassVar[str] = "StateConfig"
@@ -59,7 +60,7 @@ class Entity:
         self._interpret()
 
     def isin(self, state_id: str) -> bool:
-        return self._current_state == self._repo.get(self.name, name=state_id)
+        return self._current_state.points_to(state_id) 
 
     def dispatch(self, trigger: str):
         ...
