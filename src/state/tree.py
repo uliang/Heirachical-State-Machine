@@ -24,6 +24,12 @@ class VertexPointer:
             case _:
                 pass
 
+    def __iter__(self):
+        return iter(self._head)
+
+    def clone(self):
+        return VertexPointer(_head=self._head)
+
 
 @dataclasses.dataclass
 class Vertex:
