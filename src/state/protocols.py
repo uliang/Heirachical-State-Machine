@@ -9,6 +9,11 @@ class Connectable(Protocol):
         ...
 
 
+class Settable(Protocol):
+    def set(self, key: str):
+        ...
+
+
 class ConfigMetaSpec(Protocol):
     config_classname: ClassVar[str]
     interpreter: ClassVar[Callable]
