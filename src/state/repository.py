@@ -2,7 +2,6 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import partial
 from state.tree import Tree, Vertex
-from state.model import State
 
 
 @dataclass
