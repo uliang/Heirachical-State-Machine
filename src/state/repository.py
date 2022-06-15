@@ -1,23 +1,23 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import partial
-from state.tree import Tree
+from state.tree import Tree, Vertex
 from state.model import State
 
 
 @dataclass
 class StateRepository:
 
-    _database: dict[str, Tree[State]] = field(
+    _database: dict[str, Tree] = field(
         default_factory=partial(defaultdict, Tree), init=False
     )
 
-    def insert(self, entity_name: str, /, name: str, state: State):
+    def insert(self, entity_name: str, /, name: str, parent_name: str) -> Vertex:
         tree = self._database[entity_name]
-        tree.add_vertex(state, name, parent_name=state.substate_of)
+        return tree.add_vertex(name=name, parent_name=parent_name)
 
-    def get(self, entity_name: str, /, name: str):
-        return self._database[entity_name][name].data
+    def get(self, entity_name: str, /, name: str) -> Vertex:
+        return self._database[entity_name][name]
 
     def flush(self):
         self._database = defaultdict(Tree)

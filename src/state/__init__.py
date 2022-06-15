@@ -3,9 +3,9 @@ from dataclasses import dataclass, field
 from typing import ClassVar
 
 from state.signals import ENTRY, INITIALLY_TRANSITION
+from state.signals import ns
 from state.model import State
 from state.repository import StateRepository
-from state.signals import ns
 from state.transitions import Transition
 from state.protocols import Repository
 
@@ -24,10 +24,8 @@ class Entity:
 
     def _interpret(self):
         config = getattr(self, self._config_classname)
-        saved_transition_configs = []
         for name in dir(config):
-            classvar = getattr(config, name)
-            match classvar:
+            match getattr(config, name):
                 case State(
                     on_entry=handle_entry,
                     initial=initial,
@@ -35,8 +33,9 @@ class Entity:
                     on=transition_object,
                 ):
 
-                    this_state = classvar
-                    self._repo.insert(self.name, name=name, state=this_state)
+                    this_state = self._repo.insert(
+                        self.name, name=name, parent_name=parent
+                    )
 
                     handler = getattr(self, handle_entry, NOOP)
                     ENTRY.connect(handler, this_state)
@@ -49,7 +48,7 @@ class Entity:
 
                     if initial:
                         parent_state = self._repo.get(self.name, name=parent)
-                        initial_transition = Transition(parent_state, dest=this_state)
+                        initial_transition = Transition(parent_state, this_state)
                         INITIALLY_TRANSITION.connect(
                             initial_transition, parent_state, weak=False
                         )
