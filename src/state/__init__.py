@@ -70,5 +70,8 @@ class Entity:
     def stop(self):
         ...
 
+    def set(self, key: str):
+        self._current_state.set_head(key)
+
     class StateConfig:
         pass
