@@ -68,10 +68,20 @@ class Entity:
         INITIALLY_TRANSITION.send(root_state, context=self)
 
     def isin(self, state_id: str) -> bool:
-        return self._current_state.points_to(state_id) 
+        return self._current_state.points_to(state_id)
 
-    def dispatch(self, trigger: str):
-        ...
+    def dispatch(self, trigger: str, payload=None):
+        signal = ns.signal(trigger)
+        vp = self._current_state.clone()
+        while not vp.points_to("ROOT"):
+            for state_id in vp:
+                state = self._repo.get(self.name, name=state_id)
+                signal.send(state, context=self, payload=payload)
+                if self._ishandled:
+                    self._ishandled = False
+                    return
+                parent = self._repo.get(self.name, name=state.parent)
+                vp.set_head(parent.name)
 
     def start(self):
         ...
