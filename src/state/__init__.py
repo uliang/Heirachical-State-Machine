@@ -18,7 +18,9 @@ def NOOP(sender):
 @dataclass
 class Entity:
     name: str
-    _current_state:VertexPointer = field(init=False, repr=False, default_factory=VertexPointer) 
+    _current_state: VertexPointer = field(
+        init=False, repr=False, default_factory=VertexPointer
+    )
     _ishandled: bool = field(default=False, init=False, repr=False)
 
     def toggle_handled(self, sender, value):
