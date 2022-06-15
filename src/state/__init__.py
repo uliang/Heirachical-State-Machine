@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from state.signals import ENTRY, INITIALLY_TRANSITION
+from state.signals import ENTRY, INITIALLY_TRANSITION, HANDLED
 from state.signals import ns
 from state.model import State
 from state.repository import StateRepository
@@ -19,6 +19,10 @@ def NOOP(sender):
 class Entity:
     name: str
     _current_state:VertexPointer = field(init=False, repr=False, default_factory=VertexPointer) 
+    _ishandled: bool = field(default=False, init=False, repr=False)
+
+    def toggle_handled(self, sender, value):
+        self._ishandled = value
 
     _repo: ClassVar[Repository[State]] = StateRepository()
     _config_classname: ClassVar[str] = "StateConfig"
@@ -46,6 +50,7 @@ class Entity:
                         next_state = self._repo.get(self.name, name=next_state_name)
                         transition = Transition(this_state, next_state)
                         signal.connect(transition, this_state, weak=False)
+                        HANDLED.connect(self.toggle_handled, transition)
 
                     if initial:
                         parent_state = self._repo.get(self.name, name=parent)

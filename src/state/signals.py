@@ -8,6 +8,7 @@ INITIALLY_TRANSITION = ns.signal(
     doc="Emitted when parent state is entered to indicate that"
     " transition to initial substate should occur.",
 )
+HANDLED = ns.signal("HANDLED", doc="Emitter when transition was handled")
 
 
 def disconnect_signals_from(namespace: blinker.Namespace):
