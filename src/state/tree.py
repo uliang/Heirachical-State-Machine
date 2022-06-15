@@ -11,7 +11,7 @@ T = TypeVar("T")
 class VertexPointer:
     _head: list[str] = dataclasses.field(default_factory=list)
 
-    def points_to(self, name: str) -> bool: 
+    def points_to(self, name: str) -> bool:
         return name in self._head
 
     def set_head(self, name: str | list[str]):
