@@ -8,7 +8,7 @@ from state.model import State
 from state.repository import StateRepository
 from state.transitions import Transition
 from state.protocols import Repository
-from state.tree import VertexPointer
+from state.tree import Vertex, VertexPointer
 
 
 def NOOP(sender):
@@ -21,10 +21,7 @@ class Entity:
     _current_state: VertexPointer = field(
         init=False, repr=False, default_factory=VertexPointer
     )
-    _ishandled: bool = field(default=False, init=False, repr=False)
-
-    def toggle_handled(self, sender, value):
-        self._ishandled = value
+    _parent2initialstate: dict[str, Vertex] = field(default_factory=dict, init=False)
 
     _repo: ClassVar[Repository[State]] = StateRepository()
     _config_classname: ClassVar[str] = "StateConfig"
@@ -47,18 +44,16 @@ class Entity:
                     handler = getattr(self, handle_entry, NOOP)
                     ENTRY.connect(handler, this_state)
 
-                    for signal_name, next_state_name in transition_object.items():
-                        signal = ns.signal(signal_name)
-                        next_state = self._repo.get(self.name, name=next_state_name)
-                        transition = Transition(this_state, next_state)
-                        signal.connect(transition, this_state, weak=False)
-                        HANDLED.connect(self.toggle_handled, transition)
+                    for trigger, next_state_name in transition_object.items():
+                        dest = self._repo.get(self.name, next_state_name)
+                        transition = Transition(trigger, source=this_state, dest=dest)
+                        HANDLED.connect(self._current_state.set_head, transition)
 
                     if initial:
                         parent_state = self._repo.get(self.name, name=parent)
-                        initial_transition = Transition(parent_state, this_state)
+                        self._parent2initialstate[parent_state.name] = this_state
                         INITIALLY_TRANSITION.connect(
-                            initial_transition, parent_state, weak=False
+                            self.enter_initial_state, parent_state
                         )
                 case _:
                     pass
@@ -67,7 +62,8 @@ class Entity:
         self._interpret()
 
         root_state = self._repo.get(self.name, name="ROOT")
-        INITIALLY_TRANSITION.send(root_state, context=self)
+        INITIALLY_TRANSITION.send(root_state)
+        self._current_state.commit()
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
@@ -78,9 +74,12 @@ class Entity:
         while not vp.points_to("ROOT"):
             for state_id in vp:
                 state = self._repo.get(self.name, name=state_id)
-                signal.send(state, context=self, payload=payload)
-                if self._ishandled:
-                    self._ishandled = False
+                result = signal.send(state)
+                if self._current_state.changed:
+                    _, dest_state_id = next(iter(result))
+                    dest_state = self._repo.get(self.name, dest_state_id)
+                    INITIALLY_TRANSITION.send(dest_state)
+                    self._current_state.commit()
                     return
                 parent = self._repo.get(self.name, name=state.parent)
                 vp.set_head(parent.name)
@@ -91,8 +90,13 @@ class Entity:
     def stop(self):
         ...
 
-    def set(self, key: str):
-        self._current_state.set_head(key)
+    def enter_initial_state(self, sender: Vertex):
+        vertex = sender
+        while True:
+            if vertex.name not in self._parent2initialstate:
+                self._current_state.set_head(vertex.name)
+                return vertex.name
+            vertex = self._parent2initialstate[vertex.name]
 
     class StateConfig:
         pass
