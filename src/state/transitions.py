@@ -1,15 +1,25 @@
 import dataclasses
 from state.tree import Vertex
-from state.protocols import Settable
-from state.signals import INITIALLY_TRANSITION, HANDLED
+from state.signals import HANDLED, ns
 
 
 @dataclasses.dataclass
 class Transition:
-    source: Vertex
-    dest: Vertex
+    trigger: dataclasses.InitVar[str]
+    source: dataclasses.InitVar[Vertex]
+    dest: dataclasses.InitVar[Vertex]
 
-    def __call__(self, sender: Vertex, context: Settable, payload=None):
-        context.set(self.dest.name)
-        INITIALLY_TRANSITION.send(self.dest, context=context, payload=payload)
-        HANDLED.send(self, value=True)
+    _source2dest: dict[str, Vertex] = dataclasses.field(
+        init=False, default_factory=dict
+    )
+
+    def __post_init__(self, trigger, source, dest):
+        signal = ns.signal(trigger)
+        signal.connect(self, source, weak=False)
+
+        self._source2dest[source.name] = dest
+
+    def __call__(self, sender: Vertex):
+        dest_name = self._source2dest[sender.name].name
+        HANDLED.send(self, name=dest_name)
+        return dest_name
