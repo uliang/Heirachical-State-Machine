@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TypeVar, Callable
 import dataclasses
 from collections import defaultdict
@@ -5,30 +6,6 @@ from operator import attrgetter
 
 
 T = TypeVar("T")
-
-
-@dataclasses.dataclass
-class VertexPointer:
-    _head: list[str] = dataclasses.field(default_factory=list)
-
-    def points_to(self, name: str) -> bool:
-        return name in self._head
-
-    def set_head(self, name: str | list[str]):
-        self._head = []
-        match name:
-            case str(name):
-                self._head.append(name)
-            case [*names]:
-                self._head.extend(names)
-            case _:
-                pass
-
-    def __iter__(self):
-        return iter(self._head)
-
-    def clone(self):
-        return VertexPointer(_head=self._head)
 
 
 @dataclasses.dataclass
@@ -43,6 +20,40 @@ class Vertex:
 
     def __hash__(self):
         return hash(self.name)
+
+
+@dataclasses.dataclass
+class VertexPointer:
+    _head: list[str] = dataclasses.field(default_factory=list)
+    _changed: bool = False
+
+    def points_to(self, name: str) -> bool:
+        return name in self._head
+
+    def set_head(self, sender, name: str | None = None):
+        self._head = []
+        match sender:
+            case str(name) | Vertex(name=name):
+                self._head.append(name)
+            case [*names]:
+                self._head.extend(names)
+            case _:
+                if name:
+                    self._head.append(name)
+        self._changed = True
+
+    def __iter__(self):
+        return iter(self._head)
+
+    def clone(self):
+        return VertexPointer(_head=self._head)
+
+    def commit(self):
+        self._changed = False
+
+    @property
+    def changed(self) -> bool:
+        return self._changed
 
 
 @dataclasses.dataclass
