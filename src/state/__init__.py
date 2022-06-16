@@ -93,6 +93,7 @@ class Entity:
     def enter_initial_state(self, sender: Vertex):
         vertex = sender
         while True:
+            ENTRY.send(vertex)
             if vertex.name not in self._parent2initialstate:
                 self._current_state.set_head(vertex.name)
                 return vertex.name
