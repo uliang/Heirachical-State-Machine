@@ -19,10 +19,14 @@ class Toaster(Entity):
     def switch_heater_on(self, sender, **kwargs):
         self.heater_on = True
 
+    def switch_heater_off(self, sender, **kwargs): 
+        self.heater_on = False
+
     class StateConfig:
         heating = State(
             initial=True,
             on_entry="switch_heater_on",
+            on_exit="switch_heater_off", 
             on={"DO_BAKE": "baking", "DO_TOAST": "toasting", "DOOR_OPEN": "door_open"},
         )
         toasting = State(
@@ -164,3 +168,9 @@ def test_entry_action_fires_on_entry_into_state(toaster):
     assert toaster.heater_on
     assert toaster.timer_armed
     assert toaster.arm_timer_for_toast_color == 3
+
+
+def test_exitaction_fires_on_exit_from_state(toaster): 
+    toaster.dispatch('DOOR_OPEN') 
+
+    assert not toaster.heater_on 
