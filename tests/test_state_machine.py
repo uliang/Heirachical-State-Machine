@@ -170,7 +170,7 @@ def test_entry_action_fires_on_entry_into_state(toaster):
     assert toaster.arm_timer_for_toast_color == 3
 
 
-def test_exitaction_fires_on_exit_from_state(toaster): 
+def test_exit_action_fires_on_exit_from_state(toaster): 
     toaster.dispatch('DOOR_OPEN') 
 
     assert not toaster.heater_on 
