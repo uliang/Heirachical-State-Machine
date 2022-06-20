@@ -3,6 +3,7 @@ import blinker
 ns = blinker.Namespace()
 
 ENTRY = ns.signal("ENTRY", doc="Emitted when state is entered")
+EXIT = ns.signal("EXIT", doc="Emitter when state is exitted")
 INITIALLY_TRANSITION = ns.signal(
     "INITIALLY_TRANSITION",
     doc="Emitted when parent state is entered to indicate that"
