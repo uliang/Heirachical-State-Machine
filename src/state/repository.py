@@ -11,8 +11,8 @@ class StateRepository:
         default_factory=partial(defaultdict, Tree), init=False
     )
 
-    def __getitem__(self, key:str): 
-        return self._database[key] 
+    def __getitem__(self, key: str):
+        return self._database[key]
 
     def insert(self, entity_name: str, /, name: str, parent_name: str) -> Vertex:
         tree = self._database[entity_name]
