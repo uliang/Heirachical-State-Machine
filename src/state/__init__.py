@@ -85,14 +85,13 @@ class Entity:
                 if self._current_state.changed:
                     _, dest_state_id = next(iter(result))
                     lca = self._repo[self.name].get_lca(state_id, dest_state_id)
-                    # breakpoint()
+                    
                     path_head = state
                     exit_path.append(path_head)
                     while path_head.name != lca.name:
                         path_head = self._repo.get(self.name, name=path_head.parent)
                         exit_path.append(path_head)
-                        # if path_head.name != lca.parent:
-                        #     break
+                        
 
                     dest_state = self._repo.get(self.name, dest_state_id)
                     path_head = dest_state
