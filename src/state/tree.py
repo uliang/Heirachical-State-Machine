@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import partial
 from typing import TypeVar, Callable
 import dataclasses
 from collections import defaultdict
@@ -58,12 +59,9 @@ class VertexPointer:
 
 @dataclasses.dataclass
 class Tree:
-    _vertices: dict[str, Vertex] = dataclasses.field(default_factory=dict)
+    _vertices: dict[str, Vertex] = dataclasses.field(default_factory=partial(defaultdict, Vertex))
 
     _euler_tour: list[Vertex] = dataclasses.field(default_factory=list, init=False)
-
-    def __post_init__(self):
-        self._vertices = defaultdict(Vertex)
 
     def add_vertex(self, name: str, parent_name: str):
         vertex = self._vertices[name]
