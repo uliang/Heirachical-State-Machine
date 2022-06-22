@@ -80,15 +80,6 @@ class Tree:
 
     _euler_tour: list[Vertex] = dataclasses.field(default_factory=list, init=False)
 
-    def add_vertex(self, name: str, parent_name: str):
-        vertex = self._vertices[name]
-        vertex.name = name
-        vertex.parent = parent_name
-        parent_vertex = self._vertices[parent_name]
-        parent_vertex.name = parent_name
-        parent_vertex.children.append(name)
-        return vertex
-
     def __getitem__(self, name: str) -> Vertex:
         return self._vertices[name]
 
