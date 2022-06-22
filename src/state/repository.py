@@ -1,25 +1,37 @@
 from collections import defaultdict
-from dataclasses import dataclass, field
-from functools import partial
+from dataclasses import dataclass, field, InitVar
+from typing import ClassVar 
 from state.tree import Tree, Vertex
 
 
 @dataclass
 class StateRepository:
+    tree_name: InitVar[str]
 
-    _database: dict[str, Tree] = field(
-        default_factory=partial(defaultdict, Tree), init=False
-    )
+    _tree: Tree = field(init=False, default=None)
+    _database: ClassVar[defaultdict] =  defaultdict(Tree)
 
-    def __getitem__(self, key: str):
-        return self._database[key]
+    def __post_init__(self, tree_name): 
+        self._tree = self._database[tree_name]
+        self._tree['ROOT'] = Vertex('ROOT')
+        
+    @property 
+    def tree(self) -> Tree: 
+        return self._tree
 
-    def insert(self, entity_name: str, /, name: str, parent_name: str) -> Vertex:
-        tree = self._database[entity_name]
-        return tree.add_vertex(name=name, parent_name=parent_name)
+    def insert(self, vertex:Vertex,/) -> Vertex:
+        self._tree[vertex.name] = vertex
+        parent = self._tree[vertex.parent]
+        parent.children.append(vertex.name)
+        
+        return vertex
 
-    def get(self, entity_name: str, /, name: str) -> Vertex:
-        return self._database[entity_name][name]
+    def get(self, name:str) -> Vertex:
+        vertex =  self._tree[name]
+        vertex.name = name
+        return vertex
 
     def flush(self):
         self._database = defaultdict(Tree)
+        
+        
