@@ -20,10 +20,10 @@ class ConfigMetaSpec(Protocol):
 
 
 class Repository(Protocol[T]):
-    def insert(self, entity_name: str, /, name: str, state: T):
+    def insert(self, vertex: T):
         ...
 
-    def get(self, entity_name: str, /, name: str) -> T:
+    def get(self,  name: str) -> T:
         ...
 
     def flush(self):
