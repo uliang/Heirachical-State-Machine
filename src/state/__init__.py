@@ -44,11 +44,11 @@ class Entity:
                         self._parent2initialstate[parent] = this_state
                     self._repo.insert(this_state)
 
-                    handler = getattr(self, handle_entry, NOOP)
-                    ENTRY.connect(handler, this_state)
-
-                    handler = getattr(self, handle_exit, NOOP)
-                    EXIT.connect(handler, this_state)
+                    for handler_name, signal in zip(
+                        (handle_entry, handle_exit), (ENTRY, EXIT)
+                    ):
+                        handler = getattr(self, handler_name, NOOP)
+                        signal.connect(handler, this_state)
 
                     for trigger, dest_name in transition_object.items():
                         dest = self._repo.get(dest_name)
@@ -61,10 +61,6 @@ class Entity:
     def __post_init__(self):
         self._repo = StateRepository(self.name)
         self._interpret()
-
-        root_state = self._repo.get(name="ROOT")
-        self.enter_initial_state(root_state)
-        self._current_state.commit()
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
@@ -92,8 +88,8 @@ class Entity:
                     dest_state = self._repo.get(dest_state_id)
                     path_head = dest_state
                     entry_path.append(path_head)
+                    path_head = self._repo.get(name=path_head.parent)
                     while path_head.name != lca.name:
-                        path_head = self._repo.get(name=path_head.parent)
                         entry_path.append(path_head)
 
                     for state in exit_path:
@@ -109,7 +105,9 @@ class Entity:
                 vp.set_head(parent.name)
 
     def start(self):
-        ...
+        root_state = self._repo.get("ROOT")
+        self.enter_initial_state(root_state)
+        self._current_state.commit()
 
     def stop(self):
         ...
