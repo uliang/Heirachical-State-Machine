@@ -40,20 +40,21 @@ class Entity:
 
                     this_state = self._repo.get(name)
                     this_state.parent = parent
+                    for handler_name, signal in zip(
+                        (handle_entry, handle_exit), (ENTRY, EXIT)
+                    ):
+                        handler = getattr(self, handler_name, NOOP)
+                        signal.connect(handler, this_state)
                     if initial:
                         self._parent2initialstate[parent] = this_state
-                    self._repo.insert(this_state)
-
-                    handler = getattr(self, handle_entry, NOOP)
-                    ENTRY.connect(handler, this_state)
-
-                    handler = getattr(self, handle_exit, NOOP)
-                    EXIT.connect(handler, this_state)
+                        INITIALLY_TRANSITION.connect(self.enter_initial_state, this_state)
 
                     for trigger, dest_name in transition_object.items():
                         dest = self._repo.get(dest_name)
                         transition = Transition(trigger, source=this_state, dest=dest)
                         HANDLED.connect(self._current_state.set_head, transition)
+
+                    self._repo.insert(this_state)
                 case _:
 
                     pass
@@ -61,10 +62,6 @@ class Entity:
     def __post_init__(self):
         self._repo = StateRepository(self.name)
         self._interpret()
-
-        root_state = self._repo.get(name="ROOT")
-        self.enter_initial_state(root_state)
-        self._current_state.commit()
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
@@ -110,7 +107,9 @@ class Entity:
         #         vp.set_head(parent.name)
 
     def start(self):
-        ...
+        root_state = self._repo.get("ROOT")
+        self.enter_initial_state(root_state)
+        self._current_state.commit()
 
     def stop(self):
         ...
