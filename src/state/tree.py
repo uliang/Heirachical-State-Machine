@@ -5,6 +5,8 @@ import dataclasses
 from collections import defaultdict
 from operator import attrgetter
 
+import blinker
+
 
 @dataclasses.dataclass
 class Vertex:
@@ -45,6 +47,8 @@ class VertexPointer:
     _head: list[str] = dataclasses.field(default_factory=list)
     _changed: bool = False
 
+    def handle(self, signal: blinker.Signal): 
+        ...
     def points_to(self, name: str) -> bool:
         return name in self._head
 

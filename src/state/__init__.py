@@ -71,42 +71,43 @@ class Entity:
 
     def dispatch(self, trigger: str, payload=None):
         signal = ns.signal(trigger)
-        vp = self._current_state.clone()
-        exit_path = []
-        entry_path = []
-        while not vp.points_to("ROOT"):
-            for state_id in vp:
-                state = self._repo.get(name=state_id)
-                exit_path.append(state)
-                result = signal.send(state)
-                if self._current_state.changed:
-                    _, dest_state_id = next(iter(result))
-                    lca = self._repo.tree.get_lca(state_id, dest_state_id)
+        self._current_state.handle(signal)
+        # vp = self._current_state.clone()
+        # exit_path = []
+        # entry_path = []
+        # while not vp.points_to("ROOT"):
+        #     for state_id in vp:
+        #         state = self._repo.get(name=state_id)
+        #         exit_path.append(state)
+        #         result = signal.send(state)
+        #         if self._current_state.changed:
+        #             _, dest_state_id = next(iter(result))
+        #             lca = self._repo.tree.get_lca(state_id, dest_state_id)
 
-                    path_head = state
-                    exit_path.append(path_head)
-                    while path_head.name != lca.name:
-                        path_head = self._repo.get(name=path_head.parent)
-                        exit_path.append(path_head)
+        #             path_head = state
+        #             exit_path.append(path_head)
+        #             while path_head.name != lca.name:
+        #                 path_head = self._repo.get(name=path_head.parent)
+        #                 exit_path.append(path_head)
 
-                    dest_state = self._repo.get(dest_state_id)
-                    path_head = dest_state
-                    entry_path.append(path_head)
-                    while path_head.name != lca.name:
-                        path_head = self._repo.get(name=path_head.parent)
-                        entry_path.append(path_head)
+        #             dest_state = self._repo.get(dest_state_id)
+        #             path_head = dest_state
+        #             entry_path.append(path_head)
+        #             while path_head.name != lca.name:
+        #                 path_head = self._repo.get(name=path_head.parent)
+        #                 entry_path.append(path_head)
 
-                    for state in exit_path:
-                        EXIT.send(state)
+        #             for state in exit_path:
+        #                 EXIT.send(state)
 
-                    for state in reversed(entry_path[:-1]):
-                        ENTRY.send(state)
+        #             for state in reversed(entry_path[:-1]):
+        #                 ENTRY.send(state)
 
-                    self.enter_initial_state(dest_state)
-                    self._current_state.commit()
-                    return
-                parent = self._repo.get(name=state.parent)
-                vp.set_head(parent.name)
+        #             self.enter_initial_state(dest_state)
+        #             self._current_state.commit()
+        #             return
+        #         parent = self._repo.get(name=state.parent)
+        #         vp.set_head(parent.name)
 
     def start(self):
         ...
