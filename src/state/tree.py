@@ -44,7 +44,7 @@ class Vertex:
 
 @dataclasses.dataclass
 class VertexPointer:
-    _head: list[str] = dataclasses.field(default_factory=list)
+    _head: list[Vertex] = dataclasses.field(default_factory=list)
     _changed: bool = False
 
     def handle(self, signal: blinker.Signal): 
