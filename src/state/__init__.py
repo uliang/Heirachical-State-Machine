@@ -119,7 +119,7 @@ class Entity:
         while True:
             ENTRY.send(vertex)
             if vertex.name not in self._parent2initialstate:
-                self._current_state.set_head(vertex.name)
+                self._current_state.set_head(vertex)
                 return vertex.name
 
             vertex = self._parent2initialstate[vertex.name]
