@@ -23,7 +23,7 @@ class Repository(Protocol[T]):
     def insert(self, vertex: T):
         ...
 
-    def get(self,  name: str) -> T:
+    def get(self, name: str) -> T:
         ...
 
     def flush(self):
