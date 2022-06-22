@@ -121,7 +121,5 @@ class Entity:
             if vertex.name not in self._parent2initialstate:
                 self._current_state.set_head(vertex.name)
                 return vertex.name
-            vertex = self._parent2initialstate[vertex.name]
 
-    class StateConfig:
-        pass
+            vertex = self._parent2initialstate[vertex.name]
