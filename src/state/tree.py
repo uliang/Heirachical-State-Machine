@@ -1,12 +1,9 @@
 from __future__ import annotations
 from functools import partial
-from typing import TypeVar, Callable
+from typing import Callable
 import dataclasses
 from collections import defaultdict
 from operator import attrgetter
-
-
-T = TypeVar("T")
 
 
 @dataclasses.dataclass
