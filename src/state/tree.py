@@ -49,19 +49,12 @@ class VertexPointer:
 
     def handle(self, signal: blinker.Signal): 
         ...
-    def points_to(self, name: str) -> bool:
-        return name in self._head
 
-    def set_head(self, sender, name: str | None = None):
-        self._head = []
-        match sender:
-            case str(name) | Vertex(name=name):
-                self._head.append(name)
-            case [*names]:
-                self._head.extend(names)
-            case _:
-                if name:
-                    self._head.append(name)
+    def points_to(self, name: str) -> bool:
+        return any(name==vertex.name for vertex in self._head)
+
+    def set_head(self, sender:Vertex):
+        self._head = [sender]
         self._changed = True
 
     def __iter__(self):
