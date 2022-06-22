@@ -10,9 +10,9 @@ T = TypeVar("T")
 
 @dataclasses.dataclass
 class Vertex:
-    name: str = ""
+    _name: str = "UNSET"
     children: list[str] = dataclasses.field(default_factory=list)
-    parent: str = "UNSET"
+    _parent: str = "UNSET"
     depth: int = 0
 
     def __eq__(self, other) -> bool:
@@ -20,6 +20,24 @@ class Vertex:
 
     def __hash__(self):
         return hash(self.name)
+    @property 
+    def name(self): 
+        return self._name
+    @name.setter
+    def name(self, value): 
+        if value != self._name and self._name != 'UNSET':
+            raise ValueError
+        self._name = value
+        
+    @property 
+    def parent(self) -> str: 
+        return self._parent 
+
+    @parent.setter
+    def parent(self, value:str):
+        if value != self._parent and self._parent != 'UNSET':
+            raise ValueError
+        self._parent = value
 
 
 @dataclasses.dataclass
@@ -77,6 +95,9 @@ class Tree:
     def __getitem__(self, name: str) -> Vertex:
         return self._vertices[name]
 
+    def __setitem__(self, key:str, vertex: Vertex): 
+        self._vertices[key] = vertex
+
     def children(self, name: str) -> list[Vertex]:
         vertex = self[name]
         return [self[child_name] for child_name in vertex.children]
@@ -90,7 +111,7 @@ class Tree:
 
     def get_lca(self, source: str, dest: str) -> Vertex:
         if not self._euler_tour:
-            visited = [Vertex("ROOT")]
+            visited = [self['ROOT']]
 
             def make_euler(node):
                 if node not in visited:
@@ -116,3 +137,4 @@ class Tree:
             self.dfs(child_id, callback)
         if (parent_name := self[name].parent) != "UNSET":
             return callback(self[parent_name])
+        
