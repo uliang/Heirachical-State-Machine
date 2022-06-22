@@ -12,5 +12,5 @@ class State:
     on_entry: str = UNSET
     on_exit: str = UNSET
     initial: bool = False
-    substate_of: str = ROOT
+    parent: str = ROOT
     on: dict[str, str] = dataclasses.field(default_factory=dict)

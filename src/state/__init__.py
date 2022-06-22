@@ -22,8 +22,8 @@ class Entity:
         init=False, repr=False, default_factory=VertexPointer
     )
     _parent2initialstate: dict[str, Vertex] = field(default_factory=dict, init=False)
+    _repo: Repository[Vertex] = field(init=False)
 
-    _repo: ClassVar[Repository[State]] = StateRepository()
     _config_classname: ClassVar[str] = "StateConfig"
 
     def _interpret(self):
@@ -34,13 +34,15 @@ class Entity:
                     on_entry=handle_entry,
                     on_exit=handle_exit,
                     initial=initial,
-                    substate_of=parent,
+                    parent=parent,
                     on=transition_object,
                 ):
 
-                    this_state = self._repo.insert(
-                        self.name, name=name, parent_name=parent
-                    )
+                    this_state = self._repo.get(name)
+                    this_state.parent = parent
+                    if initial:
+                        self._parent2initialstate[parent] = this_state
+                    self._repo.insert(this_state)
 
                     handler = getattr(self, handle_entry, NOOP)
                     ENTRY.connect(handler, this_state)
@@ -48,25 +50,20 @@ class Entity:
                     handler = getattr(self, handle_exit, NOOP)
                     EXIT.connect(handler, this_state)
 
-                    for trigger, next_state_name in transition_object.items():
-                        dest = self._repo.get(self.name, next_state_name)
+                    for trigger, dest_name in transition_object.items():
+                        dest = self._repo.get(dest_name)
                         transition = Transition(trigger, source=this_state, dest=dest)
                         HANDLED.connect(self._current_state.set_head, transition)
-
-                    if initial:
-                        parent_state = self._repo.get(self.name, name=parent)
-                        self._parent2initialstate[parent_state.name] = this_state
-                        INITIALLY_TRANSITION.connect(
-                            self.enter_initial_state, parent_state
-                        )
                 case _:
+
                     pass
 
     def __post_init__(self):
+        self._repo = StateRepository(self.name)
         self._interpret()
 
-        root_state = self._repo.get(self.name, name="ROOT")
-        INITIALLY_TRANSITION.send(root_state)
+        root_state = self._repo.get(name="ROOT")
+        self.enter_initial_state(root_state)
         self._current_state.commit()
 
     def isin(self, state_id: str) -> bool:
@@ -79,25 +76,24 @@ class Entity:
         entry_path = []
         while not vp.points_to("ROOT"):
             for state_id in vp:
-                state = self._repo.get(self.name, name=state_id)
+                state = self._repo.get(name=state_id)
                 exit_path.append(state)
                 result = signal.send(state)
                 if self._current_state.changed:
                     _, dest_state_id = next(iter(result))
-                    lca = self._repo[self.name].get_lca(state_id, dest_state_id)
-                    
+                    lca = self._repo.tree.get_lca(state_id, dest_state_id)
+
                     path_head = state
                     exit_path.append(path_head)
                     while path_head.name != lca.name:
-                        path_head = self._repo.get(self.name, name=path_head.parent)
+                        path_head = self._repo.get(name=path_head.parent)
                         exit_path.append(path_head)
-                        
 
-                    dest_state = self._repo.get(self.name, dest_state_id)
+                    dest_state = self._repo.get(dest_state_id)
                     path_head = dest_state
                     entry_path.append(path_head)
                     while path_head.name != lca.name:
-                        path_head = self._repo.get(self.name, name=path_head.parent)
+                        path_head = self._repo.get(name=path_head.parent)
                         entry_path.append(path_head)
 
                     for state in exit_path:
@@ -106,10 +102,10 @@ class Entity:
                     for state in reversed(entry_path[:-1]):
                         ENTRY.send(state)
 
-                    INITIALLY_TRANSITION.send(dest_state)
+                    self.enter_initial_state(dest_state)
                     self._current_state.commit()
                     return
-                parent = self._repo.get(self.name, name=state.parent)
+                parent = self._repo.get(name=state.parent)
                 vp.set_head(parent.name)
 
     def start(self):
