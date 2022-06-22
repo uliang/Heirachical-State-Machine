@@ -32,9 +32,9 @@ class Toaster(Entity):
         toasting = State(
             initial=True,
             on_entry="arm_timer_event",
-            substate_of="heating",
+            parent="heating",
         )
-        baking = State(substate_of="heating")
+        baking = State(parent="heating")
         door_open = State(on={"DOOR_CLOSE": "heating"})
 
 
@@ -46,94 +46,6 @@ def toaster():
     disconnect_signals_from(ns)
     toaster_.stop()
     toaster_._repo.flush()
-
-
-def test_vertexpointer_points_to_method(toaster):
-    from state.tree import VertexPointer
-
-    tree = toaster._repo._database["toaster"]
-    vp = VertexPointer()
-    vp.set_head(tree["ROOT"].name)
-    assert vp.points_to("ROOT")
-
-
-@patch.object(Toaster, "_interpret")
-def test_interpreter_is_called(mock_interpreter):
-    toaster = Toaster("toaster", toast_color=3)
-    mock_interpreter.assert_called()
-
-
-def test_repository_database_is_not_empty_after_state_machine_init(toaster):
-    assert bool(toaster._repo._database)
-
-
-def test_child_method_on_tree(toaster):
-    from state.tree import Vertex
-
-    tree = toaster._repo._database["toaster"]
-    children = tree.children("heating")
-    assert set(children) == {Vertex("baking"), Vertex("toasting")}
-
-    children = tree.children("ROOT")
-    assert set(children) == {Vertex("heating"), Vertex("door_open")}
-
-
-def test_parent_method_on_tree(toaster):
-    from state.tree import Vertex
-
-    tree = toaster._repo._database["toaster"]
-    parent = tree.parent("heating")
-    assert parent == Vertex("ROOT")
-
-
-def test_get_lca_method_on_tree(toaster):
-    from state.tree import Vertex
-
-    tree = toaster._repo._database["toaster"]
-    lca = tree.get_lca("baking", "door_open")
-    assert lca == Vertex("ROOT")
-
-
-def test_get_lca_method_on_tree_swap_source_dest(toaster):
-    from state.tree import Vertex
-
-    tree = toaster._repo._database["toaster"]
-    lca = tree.get_lca(dest="baking", source="door_open")
-    assert lca == Vertex("ROOT")
-
-
-def test_get_lca_method_on_tree_substate(toaster):
-    from state.tree import Vertex
-
-    tree = toaster._repo._database["toaster"]
-    lca = tree.get_lca("baking", "toasting")
-    assert lca == Vertex("heating")
-
-
-def test_get_lca_method_on_tree_ancestor(toaster):
-    from state.tree import Vertex
-
-    tree = toaster._repo._database["toaster"]
-    lca = tree.get_lca("baking", "ROOT")
-    assert lca == Vertex("ROOT")
-
-
-def test_entry_handler_is_called_when_entry_signal_is_emitted(toaster):
-    from state.signals import ENTRY
-
-    heating_state = toaster._repo.get(toaster.name, name="heating")
-    ENTRY.send(heating_state)
-
-    assert toaster.heater_on
-
-
-def test_event_signals_do_connect(toaster):
-    from state.signals import ns
-
-    assert bool(ns.signal("DO_BAKE").receivers)
-    assert bool(ns.signal("DO_TOAST").receivers)
-    assert bool(ns.signal("DOOR_OPEN").receivers)
-    assert bool(ns.signal("DOOR_CLOSE").receivers)
 
 
 def test_state_machine_starts_in_initial_state(toaster):
