@@ -47,8 +47,6 @@ class Vertex:
 @dataclasses.dataclass
 class VertexPointer:
     _head: list[Vertex] = dataclasses.field(default_factory=list)
-    _changed: bool = False
-
     _handled: bool = False
     _lca : Vertex|str = "UNSET"
 
@@ -66,13 +64,15 @@ class VertexPointer:
                         REQUEST_LCA.send(self, source=vertex, dest=dest)
                     break 
 
+    def set(self, lca): 
+        self._lca = lca 
 
     def points_to(self, name: str) -> bool:
         return any(name==vertex.name for vertex in self._head)
 
     def set_head(self, sender:Vertex):
         self._head = [sender]
-        self._changed = True
+        self._handled = True
 
     def __iter__(self):
         return iter(self._head)
@@ -81,11 +81,11 @@ class VertexPointer:
         return VertexPointer(_head=self._head)
 
     def commit(self):
-        self._changed = False
+        self._handled = False
 
     @property
-    def changed(self) -> bool:
-        return self._changed
+    def handled(self) -> bool:
+        return self._handled
 
 
 @dataclasses.dataclass
@@ -113,7 +113,7 @@ class Tree:
     def leaf(self, name: str) -> bool:
         return not bool(self.children(name))
 
-    def get_lca(self, source: str, dest: str) -> Vertex:
+    def get_lca(self, sender:Settable[Vertex],  source: Vertex, dest: Vertex) -> Vertex:
         if not self._euler_tour:
             visited = [self["ROOT"]]
 
@@ -125,14 +125,13 @@ class Tree:
 
             self.dfs("ROOT", callback=make_euler)
 
-        source_node = self[source]
-        dest_node = self[dest]
-        i = self._euler_tour.index(source_node)
-        j = self._euler_tour.index(dest_node)
+        i = self._euler_tour.index(source)
+        j = self._euler_tour.index(dest)
         subarray = (
             self._euler_tour[i : j + 1] if i <= j else self._euler_tour[j : i + 1]
         )
         lca_node = min(subarray, key=attrgetter("depth"))
+        sender.set(lca_node)
         return lca_node
 
     def dfs(self, name: str, callback: Callable[[Vertex], None]):
