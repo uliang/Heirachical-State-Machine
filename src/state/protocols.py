@@ -9,8 +9,8 @@ class Connectable(Protocol):
         ...
 
 
-class Settable(Protocol):
-    def set(self, key: str):
+class Settable(Protocol[T]):
+    def set(self, value: T, /):
         ...
 
 
