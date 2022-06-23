@@ -2,6 +2,7 @@ import blinker
 
 ns = blinker.Namespace()
 
+REQUEST_LCA = ns.signal("Emitter to request lca of two nodes in a tree")
 ENTRY = ns.signal("ENTRY", doc="Emitted when state is entered")
 EXIT = ns.signal("EXIT", doc="Emitter when state is exitted")
 INITIALLY_TRANSITION = ns.signal(
