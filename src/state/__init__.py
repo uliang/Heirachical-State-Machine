@@ -71,7 +71,7 @@ class Entity:
 
     def dispatch(self, trigger: str, payload=None):
         signal = ns.signal(trigger)
-        self._current_state.handle(signal)
+        self._current_state.handle(signal, payload)
         # vp = self._current_state.clone()
         # exit_path = []
         # entry_path = []

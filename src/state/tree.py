@@ -4,6 +4,8 @@ from typing import Callable
 import dataclasses
 from collections import defaultdict
 from operator import attrgetter
+from state.protocols import Settable
+from state.signals import REQUEST_LCA
 
 import blinker
 
@@ -47,8 +49,23 @@ class VertexPointer:
     _head: list[Vertex] = dataclasses.field(default_factory=list)
     _changed: bool = False
 
-    def handle(self, signal: blinker.Signal): 
-        ...
+    _handled: bool = False
+    _lca : Vertex|str = "UNSET"
+
+    def handle(self, signal: blinker.Signal, payload): 
+        start = temp = self._head
+        exit_path = [] 
+        while True: 
+            for vertex in temp: 
+                if vertex.name == "ROOT":
+                    return 
+                exit_path.append(vertex)
+                result = signal.send(vertex)
+                if self._handled: 
+                    for _, dest in result: 
+                        REQUEST_LCA.send(self, source=vertex, dest=dest)
+                    break 
+
 
     def points_to(self, name: str) -> bool:
         return any(name==vertex.name for vertex in self._head)
