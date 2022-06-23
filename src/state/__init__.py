@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import ClassVar
 
 from state.signals import ENTRY, INITIALLY_TRANSITION, HANDLED, EXIT
+from state.signals import REQUEST_LCA
 from state.signals import ns
 from state.model import State
 from state.repository import StateRepository
@@ -62,6 +63,8 @@ class Entity:
     def __post_init__(self):
         self._repo = StateRepository(self.name)
         self._interpret()
+
+        REQUEST_LCA.connect(self._repo.tree.get_lca, self._current_state)
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
