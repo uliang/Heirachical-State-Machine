@@ -20,6 +20,6 @@ class Transition:
         self._source2dest[source.name] = dest
 
     def __call__(self, sender: Vertex):
-        dest_name = self._source2dest[sender.name].name
-        HANDLED.send(self, name=dest_name)
-        return dest_name
+        dest = self._source2dest[sender.name]
+        HANDLED.send(self, name=dest.name)
+        return dest
