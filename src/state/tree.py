@@ -90,8 +90,9 @@ class Tree:
         if (parent := vertex.parent) != "UNSET":
             return callback(parent)
 
+    @staticmethod
     def visit_vertex_along_path(
-        self, source: Vertex, dest: Vertex, callback: Callable[[Vertex], None]
+        source: Vertex, dest: Vertex, callback: Callable[[Vertex], None]
     ):
         temp = source
         while True:
