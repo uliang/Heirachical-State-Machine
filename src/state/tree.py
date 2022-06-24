@@ -13,11 +13,8 @@ class Vertex:
     _parent: str = "UNSET"
     depth: int = 0
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other:Vertex) -> bool:
         return other.name == self._name
-
-    def __hash__(self):
-        return hash(self._name)
 
     @property
     def name(self):
