@@ -93,12 +93,12 @@ class Tree:
         if (parent := vertex.parent) != "UNSET":
             return callback(parent)
 
-    def execute_along_path(
-        self, sender, source: Vertex, dest: Vertex, callback: Callable[[Vertex], None]
+    def visit_vertex_along_path(
+        self, source: Vertex, dest: Vertex, callback: Callable[[Vertex], None]
     ):
         temp = source
         while True:
             callback(temp)
-            temp = self[temp.parent]
-            if temp.name == dest.parent:
-                return
+            temp = temp.parent
+            if temp == dest.parent:
+                return temp
