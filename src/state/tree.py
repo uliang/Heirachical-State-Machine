@@ -82,9 +82,9 @@ class Tree:
         lca_node = min(subarray, key=attrgetter("depth"))
         return lca_node
 
-    def dfs(self, name: str, callback: Callable[[Vertex], None]):
-        callback(self[name])
-        for child_id in self[name].children:
-            self.dfs(child_id, callback)
-        if (parent_name := self[name].parent) != "UNSET":
+    def dfs(self, vertex: Vertex, callback: Callable[[Vertex], None]):
+        callback(vertex)
+        for child_id in vertex.children:
+            self.dfs(self[child_id], callback)
+        if (parent_name := vertex.parent) != "UNSET":
             return callback(self[parent_name])
