@@ -27,8 +27,6 @@ class Vertex:
     def tree(self, other:Tree): 
         if self._tree == "UNSET": 
             self._tree = other 
-            return 
-        raise ValueError
 
     @property
     def name(self):
@@ -36,9 +34,8 @@ class Vertex:
 
     @name.setter
     def name(self, value):
-        if value != self._name and self._name != "UNSET":
-            raise ValueError
-        self._name = value
+        if self._name == "UNSET":
+            self._name = value
 
     @property
     def parent(self) -> Vertex:
@@ -46,9 +43,8 @@ class Vertex:
 
     @parent.setter
     def parent(self, value: Vertex):
-        if value.name != self._name and self._parent != "UNSET":
-            raise ValueError
-        self._parent = value
+        if self._parent == "UNSET":
+            self._parent = value
 
 
 @dataclasses.dataclass
