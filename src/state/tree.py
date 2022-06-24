@@ -9,12 +9,26 @@ from operator import attrgetter
 @dataclasses.dataclass
 class Vertex:
     _name: str = "UNSET"
+    
     children: list[Vertex] = dataclasses.field(default_factory=list)
     _parent: str|Vertex = "UNSET"
     depth: int = 0
 
+    _tree: Tree|str = "UNSET"
+
     def __eq__(self, other:Vertex) -> bool:
         return other.name == self._name
+
+    @property
+    def tree(self): 
+        return self._tree
+
+    @tree.setter
+    def tree(self, other:Tree): 
+        if self._tree == "UNSET": 
+            self._tree = other 
+            return 
+        raise ValueError
 
     @property
     def name(self):
