@@ -1,6 +1,6 @@
 import dataclasses
 from state.tree import Vertex
-from state.signals import HANDLED, ns
+from state.signals import ns
 
 
 @dataclasses.dataclass
@@ -15,11 +15,10 @@ class Transition:
 
     def __post_init__(self, trigger, source, dest):
         signal = ns.signal(trigger)
-        signal.connect(self, source, weak=False)
+        signal.connect(self, source)
 
         self._source2dest[source.name] = dest
 
     def __call__(self, sender: Vertex):
         dest = self._source2dest[sender.name]
-        HANDLED.send(self, name=dest.name)
         return dest
