@@ -51,9 +51,6 @@ class Tree:
     def __setitem__(self, key: str, vertex: Vertex):
         self._vertices[key] = vertex
 
-    def get_vertex(self, sender, key) -> Vertex:
-        return self._vertices[key]
-
     def get_lca(self, sender, source: Vertex, dest: Vertex) -> Vertex:
         if not self._euler_tour:
             root = self["ROOT"]
