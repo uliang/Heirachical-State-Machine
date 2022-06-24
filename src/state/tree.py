@@ -9,8 +9,8 @@ from operator import attrgetter
 @dataclasses.dataclass
 class Vertex:
     _name: str = "UNSET"
-    children: list[str] = dataclasses.field(default_factory=list)
-    _parent: str = "UNSET"
+    children: list[Vertex] = dataclasses.field(default_factory=list)
+    _parent: str|Vertex = "UNSET"
     depth: int = 0
 
     def __eq__(self, other:Vertex) -> bool:
@@ -31,8 +31,8 @@ class Vertex:
         return self._parent
 
     @parent.setter
-    def parent(self, value: str):
-        if value != self._parent and self._parent != "UNSET":
+    def parent(self, value: Vertex):
+        if value.name != self._name and self._parent != "UNSET":
             raise ValueError
         self._parent = value
 
