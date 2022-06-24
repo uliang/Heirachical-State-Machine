@@ -76,11 +76,11 @@ class VertexPointer:
 @dataclass
 class Entity:
     name: str
-    _current_state: VertexPointer = field(
-        init=False, repr=False, default_factory=VertexPointer
-    )
+
+    _current_state: VertexPointer = field(init=False, repr=False, default=None)
     _parent2initialstate: dict[str, Vertex] = field(default_factory=dict, init=False)
-    _repo: Repository[Vertex] = field(init=False)
+    _repo: Repository[Vertex] = field(init=False, default=None)
+    _transitions: list[Transition] = field(init=False, default_factory=list)
 
     _config_classname: ClassVar[str] = "StateConfig"
 
