@@ -11,9 +11,9 @@ class Vertex:
     _name: str = "UNSET"
     
     children: list[Vertex] = dataclasses.field(default_factory=list)
-    _parent: str|Vertex = "UNSET"
     depth: int = 0
 
+    _parent: Vertex|str = "UNSET"
     _tree: Tree|str = "UNSET"
 
     def __eq__(self, other:Vertex) -> bool:
@@ -41,7 +41,7 @@ class Vertex:
         self._name = value
 
     @property
-    def parent(self) -> str:
+    def parent(self) -> Vertex:
         return self._parent
 
     @parent.setter
