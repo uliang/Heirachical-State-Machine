@@ -1,15 +1,17 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import ClassVar
+from typing import Callable, ClassVar
 
-from state.signals import ENTRY, INITIALLY_TRANSITION, HANDLED, EXIT
-from state.signals import REQUEST_LCA
+from state.signals import ENTRY, EXIT
+from state.signals import EXECUTE_ALONG_PATH, EXECUTE_ALONG_INITIAL_PATH
+from state.signals import REQUEST_VERTEX, REQUEST_LCA
 from state.signals import ns
 from state.model import State
 from state.repository import StateRepository
 from state.transitions import Transition
 from state.protocols import Repository
-from state.tree import Vertex, VertexPointer
+from state.tree import Vertex
+import blinker
 
 
 def NOOP(sender):
