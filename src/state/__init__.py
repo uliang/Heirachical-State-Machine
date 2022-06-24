@@ -17,6 +17,63 @@ def NOOP(sender):
 
 
 @dataclass
+class VertexPointer:
+    _head: Vertex
+    _exit_path: list[Vertex] = field(init=False, default_factory=list)
+    _entry_path: list[Vertex] = field(init=False, default_factory=list)
+
+    def handle(self, signal: blinker.Signal, payload):
+        self._entry_path, self._exit_path = [], []
+        start = temp = self._head
+        while True:
+            if temp.name == "ROOT":
+                return
+
+            try:
+                _, dest = next(iter(signal.send(temp)))
+            except StopIteration:
+                _, temp = next(iter(REQUEST_VERTEX.send(self, key=temp.parent)))
+                continue
+
+            _, lca = next(iter(REQUEST_LCA.send(self, source=temp, dest=dest)))
+            EXECUTE_ALONG_PATH.send(
+                self, source=start, dest=lca, callback=self._collect_exit_path
+            )
+            EXECUTE_ALONG_PATH.send(
+                self, source=dest, dest=lca, callback=self._collect_entry_path
+            )
+            for vertex in self._exit_path[:-1]:
+                EXIT.send(vertex)
+
+            for vertex in reversed(self._entry_path[:-1]):
+                ENTRY.send(vertex)
+
+            self._entry_path = []
+            _, final = next(
+                iter(
+                    EXECUTE_ALONG_INITIAL_PATH.send(
+                        dest, callback=self._collect_entry_path
+                    )
+                )
+            )
+
+            for vertex in self._entry_path[1:]:
+                ENTRY.send(vertex)
+
+            self._head = final
+            return
+
+    def _collect_exit_path(self, vertex: Vertex):
+        self._exit_path.append(vertex)
+
+    def _collect_entry_path(self, vertex: Vertex):
+        self._entry_path.append(vertex)
+
+    def points_to(self, name: str) -> bool:
+        return self._head.name == name
+
+
+@dataclass
 class Entity:
     name: str
     _current_state: VertexPointer = field(

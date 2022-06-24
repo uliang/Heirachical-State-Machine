@@ -45,50 +45,6 @@ class Vertex:
 
 
 @dataclasses.dataclass
-class VertexPointer:
-    _head: list[Vertex] = dataclasses.field(default_factory=list)
-    _handled: bool = False
-    _lca : Vertex|str = "UNSET"
-
-    def handle(self, signal: blinker.Signal, payload): 
-        start = temp = self._head
-        exit_path = [] 
-        while True: 
-            for vertex in temp: 
-                if vertex.name == "ROOT":
-                    return 
-                exit_path.append(vertex)
-                result = signal.send(vertex)
-                if self._handled: 
-                    for _, dest in result: 
-                        REQUEST_LCA.send(self, source=vertex, dest=dest)
-                    break 
-
-    def set(self, lca): 
-        self._lca = lca 
-
-    def points_to(self, name: str) -> bool:
-        return any(name==vertex.name for vertex in self._head)
-
-    def set_head(self, sender:Vertex):
-        self._head = [sender]
-        self._handled = True
-
-    def __iter__(self):
-        return iter(self._head)
-
-    def clone(self):
-        return VertexPointer(_head=self._head)
-
-    def commit(self):
-        self._handled = False
-
-    @property
-    def handled(self) -> bool:
-        return self._handled
-
-
-@dataclasses.dataclass
 class Tree:
     _vertices: dict[str, Vertex] = dataclasses.field(
         default_factory=partial(defaultdict, Vertex)
