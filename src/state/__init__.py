@@ -123,9 +123,16 @@ class Entity:
 
     def __post_init__(self):
         self._repo = StateRepository(self.name)
+
+        root = self._repo.get("ROOT")
+        self._current_state = VertexPointer(root)
+
         self._interpret()
 
-        REQUEST_LCA.connect(self._repo.tree.get_lca, self._current_state)
+        tree = self._repo.tree
+        REQUEST_VERTEX.connect(tree.get_vertex, self._current_state)
+        REQUEST_LCA.connect(tree.get_lca, self._current_state)
+        EXECUTE_ALONG_PATH.connect(tree.execute_along_path, self._current_state)
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
