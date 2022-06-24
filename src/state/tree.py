@@ -60,6 +60,7 @@ class Tree:
 
     def __setitem__(self, key: str, vertex: Vertex):
         self._vertices[key] = vertex
+        vertex.tree = self 
 
     def get_lca(self, source: Vertex, dest: Vertex) -> Vertex:
         if not self._euler_tour:
