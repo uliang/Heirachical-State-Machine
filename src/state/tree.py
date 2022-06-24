@@ -4,10 +4,6 @@ from typing import Callable
 import dataclasses
 from collections import defaultdict
 from operator import attrgetter
-from state.protocols import Settable
-from state.signals import REQUEST_LCA
-
-import blinker
 
 
 @dataclasses.dataclass
