@@ -58,16 +58,6 @@ class Tree:
     def __setitem__(self, key: str, vertex: Vertex):
         self._vertices[key] = vertex
 
-    def children(self, name: str) -> list[Vertex]:
-        vertex = self[name]
-        return [self[child_name] for child_name in vertex.children]
-
-    def parent(self, name: str) -> Vertex:
-        vertex = self[name]
-        return self[vertex.parent]
-
-    def leaf(self, name: str) -> bool:
-        return not bool(self.children(name))
 
     def get_lca(self, sender:Settable[Vertex],  source: Vertex, dest: Vertex) -> Vertex:
         if not self._euler_tour:
