@@ -61,9 +61,10 @@ class Tree:
     def get_vertex(self, sender, key) -> Vertex:
         return self._vertices[key]
 
-    def get_lca(self, sender:Settable[Vertex],  source: Vertex, dest: Vertex) -> Vertex:
+    def get_lca(self, sender, source: Vertex, dest: Vertex) -> Vertex:
         if not self._euler_tour:
-            visited = [self["ROOT"]]
+            root = self["ROOT"]
+            visited = [root]
 
             def make_euler(node):
                 if node not in visited:
@@ -71,7 +72,7 @@ class Tree:
                     visited.append(node)
                 self._euler_tour.append(node)
 
-            self.dfs("ROOT", callback=make_euler)
+            self.dfs(root, callback=make_euler)
 
         i = self._euler_tour.index(source)
         j = self._euler_tour.index(dest)
@@ -79,7 +80,6 @@ class Tree:
             self._euler_tour[i : j + 1] if i <= j else self._euler_tour[j : i + 1]
         )
         lca_node = min(subarray, key=attrgetter("depth"))
-        sender.set(lca_node)
         return lca_node
 
     def dfs(self, name: str, callback: Callable[[Vertex], None]):
