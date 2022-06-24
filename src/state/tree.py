@@ -88,3 +88,13 @@ class Tree:
             self.dfs(self[child_id], callback)
         if (parent_name := vertex.parent) != "UNSET":
             return callback(self[parent_name])
+
+    def execute_along_path(
+        self, sender, source: Vertex, dest: Vertex, callback: Callable[[Vertex], None]
+    ):
+        temp = source
+        while True:
+            callback(temp)
+            temp = self[temp.parent]
+            if temp.name == dest.parent:
+                return
