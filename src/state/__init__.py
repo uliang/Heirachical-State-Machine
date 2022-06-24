@@ -143,8 +143,8 @@ class Entity:
 
     def start(self):
         root_state = self._repo.get("ROOT")
-        self.enter_initial_state(root_state)
-        self._current_state.commit()
+        final = self.visit_path_to_initial_state(root_state, callback=ENTRY.send)
+        self._current_state._head = final
 
     def stop(self):
         ...
