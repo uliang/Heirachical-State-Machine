@@ -138,12 +138,13 @@ class Entity:
     def stop(self):
         ...
 
-    def enter_initial_state(self, sender: Vertex):
+    def visit_path_to_initial_state(
+        self, sender: Vertex, callback: Callable[[Vertex], None]
+    ):
         vertex = sender
         while True:
-            ENTRY.send(vertex)
-            if vertex.name not in self._parent2initialstate:
-                self._current_state.set_head(vertex)
-                return vertex.name
-
-            vertex = self._parent2initialstate[vertex.name]
+            callback(vertex)
+            if vertex.name in self._parent2initialstate:
+                vertex = self._parent2initialstate[vertex.name]
+                continue
+            return vertex
