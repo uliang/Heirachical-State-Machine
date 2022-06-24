@@ -98,20 +98,24 @@ class Entity:
 
                     this_state = self._repo.get(name)
                     this_state.parent = parent
+
+                    EXECUTE_ALONG_INITIAL_PATH.connect(
+                        self.visit_path_to_initial_state, this_state
+                    )
+
                     for handler_name, signal in zip(
                         (handle_entry, handle_exit), (ENTRY, EXIT)
                     ):
                         handler = getattr(self, handler_name, NOOP)
                         signal.connect(handler, this_state)
+
                     if initial:
                         self._parent2initialstate[parent] = this_state
-                        INITIALLY_TRANSITION.connect(self.enter_initial_state, this_state)
 
                     for trigger, dest_name in transition_object.items():
                         dest = self._repo.get(dest_name)
                         transition = Transition(trigger, source=this_state, dest=dest)
-                        HANDLED.connect(self._current_state.set_head, transition)
-
+                        self._transitions.append(transition)
                     self._repo.insert(this_state)
                 case _:
 
