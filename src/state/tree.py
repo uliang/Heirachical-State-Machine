@@ -18,10 +18,10 @@ class Vertex:
     depth: int = 0
 
     def __eq__(self, other) -> bool:
-        return other.name == self.name
+        return other.name == self._name
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self._name)
 
     @property
     def name(self):
