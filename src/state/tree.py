@@ -80,17 +80,6 @@ class Tree:
         return key in self._vertices
 
     def get_lca(self, source: Vertex, dest: Vertex) -> Vertex:
-        if not self._euler_tour:
-            root = self["ROOT"]
-            visited = [root]
-
-            def make_euler(node: Vertex):
-                if node not in visited:
-                    node.depth = self[node.parent.name].depth + 1
-                    visited.append(node)
-                self._euler_tour.append(node)
-
-            self.dfs(root, callback=make_euler)
 
         i = self._euler_tour.index(source)
         j = self._euler_tour.index(dest)
@@ -106,6 +95,19 @@ class Tree:
             self.dfs(child, callback)
         if (parent := vertex.parent) != "UNSET":
             return callback(parent)
+
+    def finalize(self): 
+        if not self._euler_tour:
+            root = self["ROOT"]
+            visited = [root]
+
+            def make_euler(node: Vertex):
+                if node not in visited:
+                    node.depth = self[node.parent.name].depth + 1
+                    visited.append(node)
+                self._euler_tour.append(node)
+
+            self.dfs(root, callback=make_euler)
 
     @staticmethod
     def visit_vertex_along_path(
