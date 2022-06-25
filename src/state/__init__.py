@@ -118,8 +118,7 @@ class Entity:
         self._current_state.handle(signal, payload)
 
     def start(self):
-        signal = ns.signal('INIT')
-        self._current_state.handle(signal)
+        self.dispatch("INIT")
 
     def stop(self):
         ...
