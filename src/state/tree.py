@@ -13,8 +13,8 @@ class Vertex:
     children: list[Vertex] = dataclasses.field(default_factory=list)
     depth: int = 0
 
-    _parent: Vertex|str = "UNSET"
-    _tree: Tree|str = "UNSET"
+    _parent: Vertex|Literal["UNSET"] = "UNSET"
+    _tree: Tree|Literal["UNSET"] = "UNSET"
 
     def __eq__(self, other:Vertex|Literal["UNSET"]) -> bool:
         match other:
