@@ -1,6 +1,6 @@
 from __future__ import annotations
 from functools import partial
-from typing import Callable
+from typing import Callable, Literal
 import dataclasses
 from collections import defaultdict
 from operator import attrgetter
@@ -16,8 +16,15 @@ class Vertex:
     _parent: Vertex|str = "UNSET"
     _tree: Tree|str = "UNSET"
 
-    def __eq__(self, other:Vertex) -> bool:
-        return other.name == self._name
+    def __eq__(self, other:Vertex|Literal["UNSET"]) -> bool:
+        match other:
+            case "UNSET" as unset: 
+                result = self._name == unset
+            case Vertex(_name=name):
+                result = name == self._name
+            case _: 
+                raise ValueError
+        return result
 
     @property
     def tree(self): 
