@@ -53,7 +53,7 @@ class VertexPointer:
                 _, temp = next(iter(INIT.send(temp)))
                 entry_path.append(temp)
             except StopIteration: 
-                for vertex in self._entry_path:
+                for vertex in entry_path:
                     ENTRY.send(vertex)
 
                     self._head = entry_path[-1]
