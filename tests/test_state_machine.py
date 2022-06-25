@@ -1,4 +1,3 @@
-
 def test_state_machine_starts_in_initial_state(toaster):
     assert toaster.isin("toasting")
 

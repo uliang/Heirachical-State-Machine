@@ -1,9 +1,8 @@
 import pytest
 import dataclasses
-from state import Entity 
-from state.model import State 
+from state import Entity
+from state.model import State
 from state.signals import ns, disconnect_signals_from
-
 
 
 @dataclasses.dataclass

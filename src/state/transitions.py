@@ -22,5 +22,3 @@ class Transition:
     def __call__(self, sender: Vertex):
         dest = self._source2dest[sender.name]
         return dest
-
-

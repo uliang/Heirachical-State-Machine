@@ -80,8 +80,10 @@ class Tree:
         return key in self._vertices
 
     def get_lca(self, source: Vertex, dest: Vertex) -> Vertex:
-        if not self._euler_tour: 
-            raise NotImplemented("Euler tour not performed. Vertex depth is not defined. Please call finalize method.")
+        if not self._euler_tour:
+            raise NotImplemented(
+                "Euler tour not performed. Vertex depth is not defined. Please call finalize method."
+            )
 
         i = self._euler_tour.index(source)
         j = self._euler_tour.index(dest)
@@ -98,7 +100,7 @@ class Tree:
         if (parent := vertex.parent) != "UNSET":
             return callback(parent)
 
-    def finalize(self): 
+    def finalize(self):
         if not self._euler_tour:
             root = self["ROOT"]
             visited = [root]
@@ -112,15 +114,19 @@ class Tree:
             self.dfs(root, callback=make_euler)
 
     def get_path(
-        self, source: Vertex, dest: Vertex, 
+        self,
+        source: Vertex,
+        dest: Vertex,
     ):
-        if not self._euler_tour: 
-            raise NotImplemented("Euler tour not performed. Vertex depth is not defined. Please call finalize method.")
+        if not self._euler_tour:
+            raise NotImplemented(
+                "Euler tour not performed. Vertex depth is not defined. Please call finalize method."
+            )
 
-        buffer = [] 
-        should_reverse = source.depth < dest.depth 
+        buffer = []
+        should_reverse = source.depth < dest.depth
 
-        if should_reverse: 
+        if should_reverse:
             source, dest = dest, source
 
         temp = source
@@ -129,7 +135,5 @@ class Tree:
             if temp == dest:
                 return buffer[::-1] if should_reverse else buffer
             temp = temp.parent
-            if temp == "UNSET": 
+            if temp == "UNSET":
                 raise ValueError("source and dest do not lie on the same path")
-
-

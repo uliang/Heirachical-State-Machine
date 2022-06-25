@@ -6,7 +6,7 @@ from state.signals import ENTRY, EXIT, INIT
 from state.signals import ns
 from state.model import State
 from state.repository import StateRepository
-from state.transitions import Transition 
+from state.transitions import Transition
 from state.protocols import Repository
 from state.tree import Vertex
 import blinker
@@ -22,31 +22,32 @@ class VertexPointer:
 
     def handle(self, signal: blinker.Signal, payload=None):
         tree = self._head.tree
-        dest, root, start =None,tree['ROOT'], self._head
+        dest, root, start = None, tree["ROOT"], self._head
 
-        for vertex in tree.get_path(start, root): 
-            match signal.send(vertex) :
-                case [(_, result)]: 
+        for vertex in tree.get_path(start, root):
+            match signal.send(vertex):
+                case [(_, result)]:
                     dest = result
                     break
                 case _:
-                    pass 
-                
-        if dest is None: return
+                    pass
+
+        if dest is None:
+            return
 
         lca = tree.get_lca(source=start, dest=dest)
 
-        for vertex in tree.get_path(start, lca)[:-1]: 
+        for vertex in tree.get_path(start, lca)[:-1]:
             EXIT.send(vertex)
 
         for vertex in tree.get_path(lca, dest)[1:]:
             ENTRY.send(vertex)
 
         vertex, buffer = dest, [dest]
-        while (vertex:=INIT.send(vertex)):
+        while vertex := INIT.send(vertex):
             [[_, vertex]] = vertex
             buffer.append(vertex)
-                
+
         for vertex in buffer[1:]:
             ENTRY.send(vertex)
 
@@ -90,7 +91,7 @@ class Entity:
                         signal.connect(handler, this_state)
 
                     if initial:
-                        transition = Transition('INIT', parent_state, this_state)
+                        transition = Transition("INIT", parent_state, this_state)
                         self._transitions.append(transition)
 
                     for trigger, dest_name in transition_object.items():
