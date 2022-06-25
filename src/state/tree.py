@@ -62,6 +62,9 @@ class Tree:
         self._vertices[key] = vertex
         vertex.tree = self 
 
+    def __contains__(self, key)-> bool : 
+        return key in self._vertices
+
     def get_lca(self, source: Vertex, dest: Vertex) -> Vertex:
         if not self._euler_tour:
             root = self["ROOT"]

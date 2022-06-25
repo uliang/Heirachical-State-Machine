@@ -98,8 +98,10 @@ class Entity:
                     on=transition_object,
                 ):
 
-                    this_state = self._repo.get(name)
-                    this_state.parent = parent
+                    this_state = self._repo.get_or_create(name)
+                    parent_state = self._repo.get_or_create(parent)
+                    this_state.parent = parent_state
+                    parent_state.children.append(this_state)
 
                     EXECUTE_ALONG_INITIAL_PATH.connect(
                         self.visit_path_to_initial_state, this_state
@@ -115,10 +117,9 @@ class Entity:
                         self._parent2initialstate[parent] = this_state
 
                     for trigger, dest_name in transition_object.items():
-                        dest = self._repo.get(dest_name)
+                        dest = self._repo.get_or_create(dest_name)
                         transition = Transition(trigger, source=this_state, dest=dest)
                         self._transitions.append(transition)
-                    self._repo.insert(this_state)
                 case _:
 
                     pass
