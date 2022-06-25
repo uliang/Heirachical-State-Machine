@@ -133,9 +133,7 @@ class Entity:
         self._current_state.handle(signal, payload)
 
     def start(self):
-        root_state = self._repo.get("ROOT")
-        final = self.visit_path_to_initial_state(root_state, callback=ENTRY.send)
-        self._current_state._head = final
+        ...
 
     def stop(self):
         ...
