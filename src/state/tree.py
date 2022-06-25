@@ -77,9 +77,9 @@ class Tree:
             root = self["ROOT"]
             visited = [root]
 
-            def make_euler(node):
+            def make_euler(node:Vertex):
                 if node not in visited:
-                    node.depth = self[node.parent].depth + 1
+                    node.depth = self[node.parent.name].depth + 1
                     visited.append(node)
                 self._euler_tour.append(node)
 
