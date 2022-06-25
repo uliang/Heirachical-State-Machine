@@ -19,11 +19,8 @@ def NOOP(sender):
 @dataclass
 class VertexPointer:
     _head: Vertex
-    _exit_path: list[Vertex] = field(init=False, default_factory=list)
-    _entry_path: list[Vertex] = field(init=False, default_factory=list)
 
     def handle(self, signal: blinker.Signal, payload):
-        self._entry_path, self._exit_path = [], []
         start = temp = self._head
         tree = self._head.tree
         while True:
@@ -55,12 +52,6 @@ class VertexPointer:
 
                 self._head = entry_path[-1]
                 return
-
-    def _collect_exit_path(self, vertex: Vertex):
-        self._exit_path.append(vertex)
-
-    def _collect_entry_path(self, vertex: Vertex):
-        self._entry_path.append(vertex)
 
     def points_to(self, name: str) -> bool:
         return self._head.name == name
