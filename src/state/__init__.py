@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Callable, ClassVar
+from typing import ClassVar
 
 from state.signals import ENTRY, EXIT, INIT
 from state.signals import ns
