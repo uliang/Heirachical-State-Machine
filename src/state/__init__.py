@@ -27,14 +27,13 @@ class VertexPointer:
         start = temp = self._head
         tree = self._head.tree
         while True:
-            if temp.name == "ROOT":
-                break
-
             try:
                 _, dest = next(iter(signal.send(temp)))
+                break
             except StopIteration:
                 temp = temp.parent
-                continue
+                if temp.name == "ROOT": 
+                    return 
 
         lca = tree.get_lca(source=temp, dest=dest) 
 
