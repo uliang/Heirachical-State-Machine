@@ -120,6 +120,7 @@ class Entity:
         self._current_state = VertexPointer(root)
 
         self._interpret()
+        self._repo.tree.finalize()
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
