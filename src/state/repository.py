@@ -19,17 +19,9 @@ class StateRepository:
     def tree(self) -> Tree:
         return self._tree
 
-    def insert(self, vertex: Vertex, /) -> Vertex:
-        self._tree[vertex.name] = vertex
-        parent = self._tree[vertex.parent]
-        parent.children.append(vertex)
-
-        return vertex
-
     def get_or_create(self, name:str) -> Vertex: 
         if name not in self._tree: 
-            vertex = self._tree[name]
-            vertex.name = name
+            self._tree[name] = Vertex(name)
         return self.get(name)
 
     def get(self, name: str) -> Vertex:
