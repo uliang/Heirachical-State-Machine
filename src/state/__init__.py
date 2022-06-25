@@ -7,7 +7,7 @@ from state.signals import EXECUTE_ALONG_INITIAL_PATH
 from state.signals import ns
 from state.model import State
 from state.repository import StateRepository
-from state.transitions import Transition
+from state.transitions import Transition, InitialTransition
 from state.protocols import Repository
 from state.tree import Vertex
 import blinker
@@ -111,7 +111,8 @@ class Entity:
                         signal.connect(handler, this_state)
 
                     if initial:
-                        self._parent2initialstate[parent] = this_state
+                        transition = InitialTransition(parent, this_state)
+                        self._transitions.append(transition)
 
                     for trigger, dest_name in transition_object.items():
                         dest = self._repo.get_or_create(dest_name)
