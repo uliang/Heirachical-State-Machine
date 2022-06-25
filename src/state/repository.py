@@ -34,7 +34,6 @@ class StateRepository:
 
     def get(self, name: str) -> Vertex:
         vertex = self._tree[name]
-        vertex.name = name
         return vertex
 
     def flush(self):
