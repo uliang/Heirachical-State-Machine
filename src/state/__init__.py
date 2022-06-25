@@ -31,9 +31,9 @@ class VertexPointer:
                 _, dest = next(iter(signal.send(temp)))
                 break
             except StopIteration:
-                temp = temp.parent
                 if temp.name == "ROOT": 
                     return 
+                temp = temp.parent
 
         lca = tree.get_lca(source=temp, dest=dest) 
 
