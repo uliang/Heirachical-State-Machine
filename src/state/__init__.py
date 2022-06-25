@@ -132,7 +132,18 @@ class Entity:
         self._current_state.handle(signal, payload)
 
     def start(self):
-        ...
+        entry_path = [] 
+        temp = self._repo.get('ROOT')
+        while True: 
+            try: 
+                _, temp = next(iter(INIT.send(temp)))
+                entry_path.append(temp)
+            except StopIteration: 
+                for vertex in entry_path[1:]:
+                    ENTRY.send(vertex)
+
+                    self._head = entry_path[-1]
+                    return
 
     def stop(self):
         ...
