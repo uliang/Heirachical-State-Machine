@@ -127,10 +127,9 @@ class Tree:
         while True:
             buffer.append(temp)
             if temp == dest:
-                break
+                return buffer[::-1] if should_reverse else buffer
             temp = temp.parent
             if temp == "UNSET": 
                 raise ValueError("source and dest do not lie on the same path")
 
-        return buffer[::-1] if should_reverse else buffer
 
