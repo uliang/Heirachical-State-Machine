@@ -2,8 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable, ClassVar
 
-from state.signals import ENTRY, EXIT
-from state.signals import EXECUTE_ALONG_INITIAL_PATH
+from state.signals import ENTRY, EXIT, INIT
 from state.signals import ns
 from state.model import State
 from state.repository import StateRepository
@@ -29,7 +28,7 @@ class VertexPointer:
         tree = self._head.tree
         while True:
             if temp.name == "ROOT":
-                return
+                break
 
             try:
                 _, dest = next(iter(signal.send(temp)))
@@ -37,30 +36,30 @@ class VertexPointer:
                 temp = temp.parent
                 continue
 
-            lca = tree.get_lca(source=temp, dest=dest) 
+        lca = tree.get_lca(source=temp, dest=dest) 
 
-            tree.visit_vertex_along_path(start, lca, callback=self._collect_exit_path)
-            for vertex in self._exit_path[:-1]:
-                EXIT.send(vertex)
+        tree.visit_vertex_along_path(start, lca, callback=self._collect_exit_path)
+        for vertex in self._exit_path[:-1]:
+            EXIT.send(vertex)
 
-            tree.visit_vertex_along_path(dest, lca, callback=self._collect_entry_path) 
-            for vertex in reversed(self._entry_path[:-1]):
-                ENTRY.send(vertex)
+        tree.visit_vertex_along_path(dest, lca, callback=self._collect_entry_path) 
+        for vertex in reversed(self._entry_path[:-1]):
+            ENTRY.send(vertex)
 
-            self._entry_path = []
-            _, final = next(
-                iter(
-                    EXECUTE_ALONG_INITIAL_PATH.send(
-                        dest, callback=self._collect_entry_path
-                    )
-                )
-            )
 
-            for vertex in self._entry_path[1:]:
-                ENTRY.send(vertex)
+        temp = dest 
+        entry_path = [] 
+        while True: 
+            try: 
+                _, temp = next(iter(INIT.send(temp)))
+                entry_path.append(temp)
+            except StopIteration: 
+                for vertex in self._entry_path:
+                    ENTRY.send(vertex)
 
-            self._head = final
-            return
+                    self._head = entry_path[-1]
+                    return
+
 
     def _collect_exit_path(self, vertex: Vertex):
         self._exit_path.append(vertex)
@@ -141,13 +140,3 @@ class Entity:
     def stop(self):
         ...
 
-    def visit_path_to_initial_state(
-        self, sender: Vertex, callback: Callable[[Vertex], None]
-    ):
-        vertex = sender
-        while True:
-            callback(vertex)
-            if vertex.name in self._parent2initialstate:
-                vertex = self._parent2initialstate[vertex.name]
-                continue
-            return vertex
