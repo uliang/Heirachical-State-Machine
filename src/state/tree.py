@@ -27,8 +27,9 @@ class Vertex:
         return result
 
     def __repr__(self)-> str: 
+        parent_name = self._parent.name if self._parent != "UNSET" else "UNSET" 
         return (f"<Vertex: name={self._name}, children=[{[c.name for c in self.children]}]"
-                f", parent={self._parent.name}, depth={self.depth}>")
+                f", parent={parent_name}, depth={self.depth}>")
     
 
     @property
