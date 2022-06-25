@@ -22,7 +22,7 @@ class StateRepository:
     def insert(self, vertex: Vertex, /) -> Vertex:
         self._tree[vertex.name] = vertex
         parent = self._tree[vertex.parent]
-        parent.children.append(vertex.name)
+        parent.children.append(vertex)
 
         return vertex
 
