@@ -21,18 +21,20 @@ class VertexPointer:
     _head: Vertex
 
     def handle(self, signal: blinker.Signal, payload=None):
-        start = temp = self._head
         tree = self._head.tree
-        while True:
-            try:
-                _, dest = next(iter(signal.send(temp)))
-                break
-            except StopIteration:
-                if temp.name == "ROOT":
-                    return
-                temp = temp.parent
+        dest, root, start =None,tree['ROOT'], self._head
 
-        lca = tree.get_lca(source=temp, dest=dest)
+        for vertex in tree.get_path(start, root): 
+            match signal.send(vertex) :
+                case [(_, result)]: 
+                    dest = result
+                    break
+                case _:
+                    pass 
+                
+        if dest is None: return
+
+        lca = tree.get_lca(source=start, dest=dest)
 
         for vertex in tree.get_path(start, lca)[:-1]: 
             EXIT.send(vertex)
@@ -40,18 +42,15 @@ class VertexPointer:
         for vertex in tree.get_path(lca, dest)[1:]:
             ENTRY.send(vertex)
 
-        temp = dest
-        entry_path = []
-        while True:
-            try:
-                entry_path.append(temp)
-                _, temp = next(iter(INIT.send(temp)))
-            except StopIteration:
-                for vertex in entry_path[1:]:
-                    ENTRY.send(vertex)
+        vertex, buffer = dest, [dest]
+        while (vertex:=INIT.send(vertex)):
+            [[_, vertex]] = vertex
+            buffer.append(vertex)
+                
+        for vertex in buffer[1:]:
+            ENTRY.send(vertex)
 
-                self._head = entry_path[-1]
-                return
+        self._head = buffer[-1]
 
     def points_to(self, name: str) -> bool:
         return self._head.name == name
