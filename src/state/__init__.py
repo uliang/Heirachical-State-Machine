@@ -3,8 +3,7 @@ from dataclasses import dataclass, field
 from typing import Callable, ClassVar
 
 from state.signals import ENTRY, EXIT
-from state.signals import EXECUTE_ALONG_PATH, EXECUTE_ALONG_INITIAL_PATH
-from state.signals import REQUEST_VERTEX, REQUEST_LCA
+from state.signals import EXECUTE_ALONG_INITIAL_PATH
 from state.signals import ns
 from state.model import State
 from state.repository import StateRepository
@@ -131,11 +130,6 @@ class Entity:
         self._current_state = VertexPointer(root)
 
         self._interpret()
-
-        tree = self._repo.tree
-        REQUEST_VERTEX.connect(tree.get_vertex, self._current_state)
-        REQUEST_LCA.connect(tree.get_lca, self._current_state)
-        EXECUTE_ALONG_PATH.connect(tree.execute_along_path, self._current_state)
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
