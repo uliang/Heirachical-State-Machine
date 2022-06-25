@@ -22,13 +22,18 @@ class StateRepository:
     def insert(self, vertex: Vertex, /) -> Vertex:
         self._tree[vertex.name] = vertex
         parent = self._tree[vertex.parent]
-        parent.children.append(vertex.name)
+        parent.children.append(vertex)
 
         return vertex
 
+    def get_or_create(self, name:str) -> Vertex: 
+        if name not in self._tree: 
+            vertex = self._tree[name]
+            vertex.name = name
+        return self.get(name)
+
     def get(self, name: str) -> Vertex:
         vertex = self._tree[name]
-        vertex.name = name
         return vertex
 
     def flush(self):
