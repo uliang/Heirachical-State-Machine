@@ -19,11 +19,8 @@ def NOOP(sender):
 @dataclass
 class VertexPointer:
     _head: Vertex
-    _exit_path: list[Vertex] = field(init=False, default_factory=list)
-    _entry_path: list[Vertex] = field(init=False, default_factory=list)
 
     def handle(self, signal: blinker.Signal, payload):
-        self._entry_path, self._exit_path = [], []
         start = temp = self._head
         tree = self._head.tree
         while True:
@@ -37,12 +34,10 @@ class VertexPointer:
 
         lca = tree.get_lca(source=temp, dest=dest)
 
-        tree.visit_vertex_along_path(start, lca, callback=self._collect_exit_path)
-        for vertex in self._exit_path[:-1]:
+        for vertex in tree.get_path(start, lca)[:-1]: 
             EXIT.send(vertex)
 
-        tree.visit_vertex_along_path(dest, lca, callback=self._collect_entry_path)
-        for vertex in reversed(self._entry_path[:-1]):
+        for vertex in tree.get_path(lca, dest)[1:]:
             ENTRY.send(vertex)
 
         temp = dest
@@ -57,12 +52,6 @@ class VertexPointer:
 
                 self._head = entry_path[-1]
                 return
-
-    def _collect_exit_path(self, vertex: Vertex):
-        self._exit_path.append(vertex)
-
-    def _collect_entry_path(self, vertex: Vertex):
-        self._entry_path.append(vertex)
 
     def points_to(self, name: str) -> bool:
         return self._head.name == name
@@ -120,6 +109,7 @@ class Entity:
         self._current_state = VertexPointer(root)
 
         self._interpret()
+        self._repo.tree.finalize()
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
