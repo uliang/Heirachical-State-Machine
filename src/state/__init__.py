@@ -100,10 +100,6 @@ class Entity:
                     this_state.parent = parent_state
                     parent_state.children.append(this_state)
 
-                    EXECUTE_ALONG_INITIAL_PATH.connect(
-                        self.visit_path_to_initial_state, this_state
-                    )
-
                     for handler_name, signal in zip(
                         (handle_entry, handle_exit), (ENTRY, EXIT)
                     ):
