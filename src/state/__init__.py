@@ -20,7 +20,7 @@ def NOOP(sender):
 class VertexPointer:
     _head: Vertex
 
-    def handle(self, signal: blinker.Signal, payload):
+    def handle(self, signal: blinker.Signal, payload=None):
         start = temp = self._head
         tree = self._head.tree
         while True:
@@ -119,19 +119,8 @@ class Entity:
         self._current_state.handle(signal, payload)
 
     def start(self):
-        entry_path = []
-        temp = self._repo.get("ROOT")
-        while True:
-            try:
-                entry_path.append(temp)
-                _, temp = next(iter(INIT.send(temp)))
-
-            except StopIteration:
-                for vertex in entry_path[1:]:
-                    ENTRY.send(vertex)
-
-                self._current_state._head = entry_path[-1]
-                return
+        signal = ns.signal('INIT')
+        self._current_state.handle(signal)
 
     def stop(self):
         ...
