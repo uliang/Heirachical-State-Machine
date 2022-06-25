@@ -22,20 +22,22 @@ class Transition:
     def __call__(self, sender: Vertex):
         dest = self._source2dest[sender.name]
         return dest
-     
+
 
 @dataclasses.dataclass
-class InitialTransition: 
-    source: dataclasses.InitVar[Vertex] 
-    dest: dataclasses.InitVar[Vertex] 
+class InitialTransition:
+    source: dataclasses.InitVar[Vertex]
+    dest: dataclasses.InitVar[Vertex]
 
-    _parent2init: dict[str, Vertex] = dataclasses.field(default_factory=dict, init=False) 
+    _parent2init: dict[str, Vertex] = dataclasses.field(
+        default_factory=dict, init=False
+    )
 
-    def __post_init__(self, source, dest): 
+    def __post_init__(self, source, dest):
         signal = ns.signal("INIT")
         signal.connect(self, source)
-        self._parent2init[source.name] = dest 
-        
-    def __call__(self, sender:Vertex): 
-        dest = self._parent2init[sender.name] 
+        self._parent2init[source.name] = dest
+
+    def __call__(self, sender: Vertex):
+        dest = self._parent2init[sender.name]
         return dest

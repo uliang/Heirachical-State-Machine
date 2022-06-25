@@ -19,8 +19,8 @@ class StateRepository:
     def tree(self) -> Tree:
         return self._tree
 
-    def get_or_create(self, name:str) -> Vertex: 
-        if name not in self._tree: 
+    def get_or_create(self, name: str) -> Vertex:
+        if name not in self._tree:
             self._tree[name] = Vertex(name)
         return self.get(name)
 

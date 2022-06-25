@@ -9,37 +9,38 @@ from operator import attrgetter
 @dataclasses.dataclass
 class Vertex:
     _name: str = "UNSET"
-    
+
     children: list[Vertex] = dataclasses.field(default_factory=list)
     depth: int = 0
 
-    _parent: Vertex|Literal["UNSET"] = "UNSET"
-    _tree: Tree|Literal["UNSET"] = "UNSET"
+    _parent: Vertex | Literal["UNSET"] = "UNSET"
+    _tree: Tree | Literal["UNSET"] = "UNSET"
 
-    def __eq__(self, other:Vertex|Literal["UNSET"]) -> bool:
+    def __eq__(self, other: Vertex | Literal["UNSET"]) -> bool:
         match other:
-            case "UNSET" as unset: 
+            case "UNSET" as unset:
                 result = self._name == unset
             case Vertex(_name=name):
                 result = name == self._name
-            case _: 
+            case _:
                 raise ValueError
         return result
 
-    def __repr__(self)-> str: 
-        parent_name = self._parent.name if self._parent != "UNSET" else "UNSET" 
-        return (f"<Vertex: name={self._name}, children=[{[c.name for c in self.children]}]"
-                f", parent={parent_name}, depth={self.depth}>")
-    
+    def __repr__(self) -> str:
+        parent_name = self._parent.name if self._parent != "UNSET" else "UNSET"
+        return (
+            f"<Vertex: name={self._name}, children=[{[c.name for c in self.children]}]"
+            f", parent={parent_name}, depth={self.depth}>"
+        )
 
     @property
-    def tree(self): 
+    def tree(self):
         return self._tree
 
     @tree.setter
-    def tree(self, other:Tree): 
-        if self._tree == "UNSET": 
-            self._tree = other 
+    def tree(self, other: Tree):
+        if self._tree == "UNSET":
+            self._tree = other
 
     @property
     def name(self):
@@ -73,9 +74,9 @@ class Tree:
 
     def __setitem__(self, key: str, vertex: Vertex):
         self._vertices[key] = vertex
-        vertex.tree = self 
+        vertex.tree = self
 
-    def __contains__(self, key)-> bool : 
+    def __contains__(self, key) -> bool:
         return key in self._vertices
 
     def get_lca(self, source: Vertex, dest: Vertex) -> Vertex:
@@ -83,7 +84,7 @@ class Tree:
             root = self["ROOT"]
             visited = [root]
 
-            def make_euler(node:Vertex):
+            def make_euler(node: Vertex):
                 if node not in visited:
                     node.depth = self[node.parent.name].depth + 1
                     visited.append(node)

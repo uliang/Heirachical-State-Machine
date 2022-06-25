@@ -31,34 +31,32 @@ class VertexPointer:
                 _, dest = next(iter(signal.send(temp)))
                 break
             except StopIteration:
-                if temp.name == "ROOT": 
-                    return 
+                if temp.name == "ROOT":
+                    return
                 temp = temp.parent
 
-        lca = tree.get_lca(source=temp, dest=dest) 
+        lca = tree.get_lca(source=temp, dest=dest)
 
         tree.visit_vertex_along_path(start, lca, callback=self._collect_exit_path)
         for vertex in self._exit_path[:-1]:
             EXIT.send(vertex)
 
-        tree.visit_vertex_along_path(dest, lca, callback=self._collect_entry_path) 
+        tree.visit_vertex_along_path(dest, lca, callback=self._collect_entry_path)
         for vertex in reversed(self._entry_path[:-1]):
             ENTRY.send(vertex)
 
-
-        temp = dest 
-        entry_path = [] 
-        while True: 
-            try: 
-                _, temp = next(iter(INIT.send(temp)))
+        temp = dest
+        entry_path = []
+        while True:
+            try:
                 entry_path.append(temp)
-            except StopIteration: 
-                for vertex in entry_path:
+                _, temp = next(iter(INIT.send(temp)))
+            except StopIteration:
+                for vertex in entry_path[1:]:
                     ENTRY.send(vertex)
 
-                    self._head = entry_path[-1]
-                    return
-
+                self._head = entry_path[-1]
+                return
 
     def _collect_exit_path(self, vertex: Vertex):
         self._exit_path.append(vertex)
@@ -131,19 +129,19 @@ class Entity:
         self._current_state.handle(signal, payload)
 
     def start(self):
-        entry_path = [] 
-        temp = self._repo.get('ROOT')
-        while True: 
-            try: 
-                _, temp = next(iter(INIT.send(temp)))
+        entry_path = []
+        temp = self._repo.get("ROOT")
+        while True:
+            try:
                 entry_path.append(temp)
-            except StopIteration: 
-                for vertex in entry_path:
+                _, temp = next(iter(INIT.send(temp)))
+
+            except StopIteration:
+                for vertex in entry_path[1:]:
                     ENTRY.send(vertex)
 
-                    self._head = entry_path[-1]
-                    return
+                self._current_state._head = entry_path[-1]
+                return
 
     def stop(self):
         ...
-
