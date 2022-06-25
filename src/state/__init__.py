@@ -26,6 +26,7 @@ class VertexPointer:
     def handle(self, signal: blinker.Signal, payload):
         self._entry_path, self._exit_path = [], []
         start = temp = self._head
+        tree = self._head.tree
         while True:
             if temp.name == "ROOT":
                 return
@@ -33,19 +34,16 @@ class VertexPointer:
             try:
                 _, dest = next(iter(signal.send(temp)))
             except StopIteration:
-                _, temp = next(iter(REQUEST_VERTEX.send(self, key=temp.parent)))
+                temp = temp.parent
                 continue
 
-            _, lca = next(iter(REQUEST_LCA.send(self, source=temp, dest=dest)))
-            EXECUTE_ALONG_PATH.send(
-                self, source=start, dest=lca, callback=self._collect_exit_path
-            )
-            EXECUTE_ALONG_PATH.send(
-                self, source=dest, dest=lca, callback=self._collect_entry_path
-            )
+            lca = tree.get_lca(source=temp, dest=dest) 
+
+            tree.visit_vertex_along_path(start, lca, callback=self._collect_exit_path)
             for vertex in self._exit_path[:-1]:
                 EXIT.send(vertex)
 
+            tree.visit_vertex_along_path(dest, lca, callback=self._collect_entry_path) 
             for vertex in reversed(self._entry_path[:-1]):
                 ENTRY.send(vertex)
 
