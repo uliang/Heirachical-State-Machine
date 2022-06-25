@@ -37,12 +37,10 @@ class VertexPointer:
 
         lca = tree.get_lca(source=temp, dest=dest)
 
-        tree.visit_vertex_along_path(start, lca, callback=self._collect_exit_path)
-        for vertex in self._exit_path[:-1]:
+        for vertex in tree.get_path(start, lca)[:-1]: 
             EXIT.send(vertex)
 
-        tree.visit_vertex_along_path(dest, lca, callback=self._collect_entry_path)
-        for vertex in reversed(self._entry_path[:-1]):
+        for vertex in tree.get_path(lca, dest)[1:]:
             ENTRY.send(vertex)
 
         temp = dest
