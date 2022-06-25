@@ -107,7 +107,7 @@ class Entity:
                         signal.connect(handler, this_state)
 
                     if initial:
-                        transition = InitialTransition(parent, this_state)
+                        transition = InitialTransition(parent_state, this_state)
                         self._transitions.append(transition)
 
                     for trigger, dest_name in transition_object.items():
