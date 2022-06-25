@@ -26,6 +26,11 @@ class Vertex:
                 raise ValueError
         return result
 
+    def __repr__(self)-> str: 
+        return (f"<Vertex: name={self._name}, children=[{[c.name for c in self.children]}]"
+                f", parent={self._parent.name}, depth={self.depth}>")
+    
+
     @property
     def tree(self): 
         return self._tree
