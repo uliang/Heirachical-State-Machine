@@ -138,8 +138,21 @@ class Tree:
             if temp == "UNSET":
                 raise ValueError("source and dest do not lie on the same path")
 
-    def search_until(self, start:Vertex, end:Vertex, callback:Callable[[Vertex], bool|Vertex]) -> Vertex:
-        for vertex in self.get_path(start, end): 
-            if result:=callback(vertex):
-                return result
-
+    def search_until(
+        self,
+        start: Vertex,
+        end: Vertex,
+        succ: Callable[[Vertex], bool | Vertex],
+        *,
+        callback: Callable[[Vertex], bool | Vertex],
+    ) -> Vertex:
+        if succ:
+            vertex = start
+            while True:
+                if result := callback(vertex):
+                    return result
+                vertex = succ(vertex)
+        else:
+            for vertex in self.get_path(start, end):
+                if result := callback(vertex):
+                    return result
