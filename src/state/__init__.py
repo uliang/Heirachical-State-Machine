@@ -24,12 +24,14 @@ class VertexPointer:
         tree = self._head.tree
         dest, root, start = None, tree["ROOT"], self._head
 
-        def signal_did_handle(vertex:Vertex): 
+        def signal_did_handle(vertex: Vertex):
             result = signal.send(vertex)
             [[_, dest]] = result if result else [(None, False)]
             return dest
 
-        if (dest := tree.search_until(start=start, end=root, callback=signal_did_handle)) is None: 
+        if (
+            dest := tree.search_until(start, root, None, callback=signal_did_handle)
+        ) is None:
             return
 
         lca = tree.get_lca(source=start, dest=dest)
