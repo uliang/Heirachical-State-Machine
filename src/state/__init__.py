@@ -40,10 +40,17 @@ class VertexPointer:
         for vertex in tree.get_path(lca, dest)[1:]:
             ENTRY.send(vertex)
 
-        vertex, buffer = dest, [dest]
-        while vertex := INIT.send(vertex):
-            [[_, vertex]] = vertex
-            buffer.append(vertex)
+        buffer = [dest]
+
+        def successor(vertex: Vertex):
+            [[_, child]] = INIT.send(vertex)
+            buffer.append(child)
+            return child
+
+        def did_reach_leaf_vertex(vertex: Vertex):
+            return not bool(vertex.children)
+
+        tree.search_until(dest, None, successor, callback=did_reach_leaf_vertex)
 
         for vertex in buffer[1:]:
             ENTRY.send(vertex)
