@@ -93,25 +93,27 @@ class Tree:
         lca_node = min(subarray, key=attrgetter("depth"))
         return lca_node
 
-    def dfs(self, vertex: Vertex, callback: Callable[[Vertex], None]):
-        callback(vertex)
-        for child in vertex.children:
-            self.dfs(child, callback)
-        if (parent := vertex.parent) != "UNSET":
-            return callback(parent)
+    def dfs(self, vertex: Vertex):
+        stack = [vertex]
+        while stack:
+            vtx = stack.pop()
+            yield vtx
+            if not vtx.children:
+                yield vtx.parent
+                continue
+            else:
+                for child in reversed(vtx.children):
+                    stack.append(child)
 
     def finalize(self):
         if not self._euler_tour:
             root = self["ROOT"]
             visited = [root]
-
-            def make_euler(node: Vertex):
-                if node not in visited:
-                    node.depth = node.parent.depth + 1
-                    visited.append(node)
-                self._euler_tour.append(node)
-
-            self.dfs(root, callback=make_euler)
+            for vertex in self.dfs(root):
+                if vertex not in visited:
+                    visited.append(vertex)
+                    vertex.depth = vertex.parent.depth + 1
+                self._euler_tour.append(vertex)
 
     def get_path(
         self,
