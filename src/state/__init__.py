@@ -37,19 +37,19 @@ class VertexPointer:
             return
 
         lca = tree.get_lca(start, dest)
-        
-        exit_path = tree.get_path(start, lca) 
-        exit_path = it.takewhile(lambda v:v != lca, exit_path) 
 
-        entry_path = tree.get_path(lca, dest) 
-        entry_path = it.dropwhile(lambda v:v==lca, entry_path)
+        exit_path = tree.get_path(start, lca)
+        exit_path = it.takewhile(lambda v: v != lca, exit_path)
 
-        [EXIT.send(v) for v in exit_path] 
-        [ENTRY.send(v) for v in entry_path] 
+        entry_path = tree.get_path(lca, dest)
+        entry_path = it.dropwhile(lambda v: v == lca, entry_path)
+
+        [EXIT.send(v) for v in exit_path]
+        [ENTRY.send(v) for v in entry_path]
 
         successors = [gen_result(INIT, dest)]
-        while successors: 
-            if vertex := first(successors.pop()): 
+        while successors:
+            if vertex := first(successors.pop()):
                 ENTRY.send(vertex)
                 successors.append(gen_result(INIT, vertex))
                 dest = vertex
