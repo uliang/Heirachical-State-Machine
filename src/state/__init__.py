@@ -25,17 +25,13 @@ class VertexPointer:
         tree = self._head.tree
         dest, root, start = None, tree["ROOT"], self._head
 
-        vertex = start
-        while True: 
-            g = gen_result(signal, vertex, **payload) 
-            try: 
-                dest = g.send(None)
-                break
-            except StopIteration: 
-                vertex = vertex.parent
-                if vertex == root: 
-                    return
+        for vertex in tree.get_path(start, root): 
+            if result := first(gen_result(signal, vertex, **payload)): 
+                dest = result
 
+        if dest is None: 
+            return
+            
         lca = tree.get_lca(source=start, dest=dest)
 
         for vertex in tree.get_path(start, lca)[:-1]:
