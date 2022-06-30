@@ -40,11 +40,10 @@ class VertexPointer:
         for vertex in tree.get_path(lca, dest)[1:]:
             ENTRY.send(vertex)
 
-        results = [gen_result(INIT, dest)]
-        while results:
-            g = results.pop()
-            if vertex := first(g):
-                results.append(gen_result(INIT, vertex))
+        successors = [gen_result(INIT, dest)]
+        while successors: 
+            if vertex := first(successors.pop()): 
+                successors.append(gen_result(INIT, vertex))
                 ENTRY.send(vertex)
                 dest = vertex
 
