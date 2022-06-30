@@ -4,6 +4,7 @@ from typing import ClassVar
 
 from state.signals import ENTRY, EXIT, INIT
 from state.signals import ns
+from state.signals import gen_result
 from state.model import State
 from state.repository import StateRepository
 from state.transitions import Transition
@@ -20,19 +21,20 @@ def NOOP(sender):
 class VertexPointer:
     _head: Vertex
 
-    def handle(self, signal: blinker.Signal, payload=None):
+    def handle(self, signal: blinker.Signal, **payload):
         tree = self._head.tree
         dest, root, start = None, tree["ROOT"], self._head
 
-        def signal_did_handle(vertex: Vertex):
-            result = signal.send(vertex)
-            [[_, dest]] = result if result else [(None, False)]
-            return dest
-
-        if (
-            dest := tree.search_until(start, root, None, callback=signal_did_handle)
-        ) is None:
-            return
+        vertex = start
+        while True: 
+            g = gen_result(signal, vertex, **payload) 
+            try: 
+                dest = g.send(None)
+                break
+            except StopIteration: 
+                vertex = vertex.parent
+                if vertex == root: 
+                    return
 
         lca = tree.get_lca(source=start, dest=dest)
 
@@ -42,22 +44,14 @@ class VertexPointer:
         for vertex in tree.get_path(lca, dest)[1:]:
             ENTRY.send(vertex)
 
-        buffer = [dest]
-
-        def successor(vertex: Vertex):
-            [[_, child]] = INIT.send(vertex)
-            buffer.append(child)
-            return child
-
-        def did_reach_leaf_vertex(vertex: Vertex):
-            return not bool(vertex.children)
-
-        tree.search_until(dest, None, successor, callback=did_reach_leaf_vertex)
-
-        for vertex in buffer[1:]:
-            ENTRY.send(vertex)
-
-        self._head = buffer[-1]
+        while True: 
+            g = gen_result(INIT, dest) 
+            try: 
+                dest = g.send(None) 
+                ENTRY.send(dest)
+            except StopIteration: 
+                self._head = dest
+                return
 
     def points_to(self, name: str) -> bool:
         return self._head.name == name
@@ -120,9 +114,9 @@ class Entity:
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
 
-    def dispatch(self, trigger: str, payload=None):
+    def dispatch(self, trigger: str, **payload):
         signal = ns.signal(trigger)
-        self._current_state.handle(signal, payload)
+        self._current_state.handle(signal, **payload)
 
     def start(self):
         self.dispatch("INIT")
