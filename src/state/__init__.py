@@ -4,7 +4,7 @@ from typing import ClassVar
 
 from state.signals import ENTRY, EXIT, INIT
 from state.signals import ns
-from state.signals import gen_result
+from state.signals import gen_result, first
 from state.model import State
 from state.repository import StateRepository
 from state.transitions import Transition
@@ -44,14 +44,15 @@ class VertexPointer:
         for vertex in tree.get_path(lca, dest)[1:]:
             ENTRY.send(vertex)
 
-        while True: 
-            g = gen_result(INIT, dest) 
-            try: 
-                dest = g.send(None) 
-                ENTRY.send(dest)
-            except StopIteration: 
-                self._head = dest
-                return
+        results = [gen_result(INIT, dest)]
+        while results: 
+            g  = results.pop() 
+            if vertex := first(g): 
+                results.append(gen_result(INIT, vertex))
+                ENTRY.send(vertex)
+                dest = vertex
+
+        self._head = dest
 
     def points_to(self, name: str) -> bool:
         return self._head.name == name
