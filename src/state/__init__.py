@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import ClassVar
 
+from _pytest.fixtures import wrap_function_to_error_out_if_called_directly
+
 from state.signals import ENTRY, EXIT, INIT
 from state.signals import ns
 from state.signals import gen_result, first
@@ -11,6 +13,8 @@ from state.transitions import Transition
 from state.protocols import Repository
 from state.tree import Vertex
 import blinker
+
+import itertools as it
 
 
 def NOOP(sender):
@@ -32,19 +36,22 @@ class VertexPointer:
         if dest is None:
             return
 
-        lca = tree.get_lca(source=start, dest=dest)
+        lca = tree.get_lca(start, dest)
+        
+        exit_path = tree.get_path(start, lca) 
+        exit_path = it.takewhile(lambda v:v != lca, exit_path) 
 
-        for vertex in tree.get_path(start, lca)[:-1]:
-            EXIT.send(vertex)
+        entry_path = tree.get_path(lca, dest) 
+        entry_path = it.dropwhile(lambda v:v==lca, entry_path)
 
-        for vertex in tree.get_path(lca, dest)[1:]:
-            ENTRY.send(vertex)
+        [EXIT.send(v) for v in exit_path] 
+        [ENTRY.send(v) for v in entry_path] 
 
         successors = [gen_result(INIT, dest)]
         while successors: 
             if vertex := first(successors.pop()): 
-                successors.append(gen_result(INIT, vertex))
                 ENTRY.send(vertex)
+                successors.append(gen_result(INIT, vertex))
                 dest = vertex
 
         self._head = dest
