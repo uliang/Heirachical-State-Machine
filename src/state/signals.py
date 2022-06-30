@@ -21,3 +21,9 @@ def gen_result(signal, sender, **payload):
         yield from gen 
     except StopIteration: 
         return None 
+
+def first(generator): 
+    try: 
+        return next(generator)
+    except StopIteration: 
+        return None
