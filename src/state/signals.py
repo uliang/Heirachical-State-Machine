@@ -14,3 +14,10 @@ def disconnect_signals_from(namespace: blinker.Namespace):
     for signal in namespace.values():
         for receiver in signal.receivers_for(blinker.ANY):
             signal.disconnect(receiver)
+
+def gen_result(signal, sender, **payload): 
+    gen = (result for _, result in signal.send(sender, **payload)) 
+    try: 
+        yield from gen 
+    except StopIteration: 
+        return None 
