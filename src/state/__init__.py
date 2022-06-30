@@ -25,13 +25,13 @@ class VertexPointer:
         tree = self._head.tree
         dest, root, start = None, tree["ROOT"], self._head
 
-        for vertex in tree.get_path(start, root): 
-            if result := first(gen_result(signal, vertex, **payload)): 
+        for vertex in tree.get_path(start, root):
+            if result := first(gen_result(signal, vertex, **payload)):
                 dest = result
 
-        if dest is None: 
+        if dest is None:
             return
-            
+
         lca = tree.get_lca(source=start, dest=dest)
 
         for vertex in tree.get_path(start, lca)[:-1]:
@@ -41,9 +41,9 @@ class VertexPointer:
             ENTRY.send(vertex)
 
         results = [gen_result(INIT, dest)]
-        while results: 
-            g  = results.pop() 
-            if vertex := first(g): 
+        while results:
+            g = results.pop()
+            if vertex := first(g):
                 results.append(gen_result(INIT, vertex))
                 ENTRY.send(vertex)
                 dest = vertex
