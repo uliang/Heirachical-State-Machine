@@ -12,14 +12,14 @@ class Toaster(Entity):
     timer_armed: bool = False
     arm_timer_for_toast_color: int | None = None
 
-    def arm_timer_event(self, sender, **kwargs):
+    def arm_timer_event(self):
         self.timer_armed = True
         self.arm_timer_for_toast_color = self.toast_color
 
-    def switch_heater_on(self, sender, **kwargs):
+    def switch_heater_on(self):
         self.heater_on = True
 
-    def switch_heater_off(self, sender, **kwargs):
+    def switch_heater_off(self):
         self.heater_on = False
 
     class StateConfig:
