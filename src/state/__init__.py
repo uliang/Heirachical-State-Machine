@@ -2,8 +2,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from _pytest.fixtures import wrap_function_to_error_out_if_called_directly
-
 from state.signals import ENTRY, EXIT, INIT
 from state.signals import ns
 from state.signals import gen_result, first
