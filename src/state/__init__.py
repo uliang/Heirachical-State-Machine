@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import ClassVar
+from typing import Callable, ClassVar
 
 from state.signals import ENTRY, EXIT, INIT
 from state.signals import ns
@@ -107,6 +107,15 @@ class Entity:
 
         self._interpret()
         self._repo.tree.finalize()
+
+    def _bind_to_sender(self, action_name:str,  action:Callable): 
+        def action_wrapper(self, sender, **kwargs): 
+            return action(**kwargs) 
+
+        method = MethodType(action_wrapper, self)
+        setattr(self, action_name, method)
+        return method
+
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
