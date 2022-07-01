@@ -85,7 +85,7 @@ class Entity:
                     for handler_name, signal in zip(
                         (handle_entry, handle_exit), (ENTRY, EXIT)
                     ):
-                        if handler_name != "UNSET": 
+                        if handler_name != "UNSET":
                             handler = getattr(self, handler_name)
                             action = self._bind_to_sender(handler_name, handler)
 
@@ -100,7 +100,6 @@ class Entity:
                         transition = Transition(trigger, source=this_state, dest=dest)
                         self._transitions.append(transition)
                 case _:
-
                     pass
 
     def __post_init__(self):
@@ -112,14 +111,13 @@ class Entity:
         self._interpret()
         self._repo.tree.finalize()
 
-    def _bind_to_sender(self, action_name:str,  action:Callable): 
-        def action_wrapper(self, sender, **kwargs): 
-            return action(**kwargs) 
+    def _bind_to_sender(self, action_name: str, action: Callable):
+        def action_wrapper(self, sender, **kwargs):
+            return action(**kwargs)
 
         method = MethodType(action_wrapper, self)
         setattr(self, action_name, method)
         return method
-
 
     def isin(self, state_id: str) -> bool:
         return self._current_state.points_to(state_id)
