@@ -1,6 +1,9 @@
 import dataclasses
+import itertools as it
 from state.tree import Vertex
+from state.signals import INIT, ENTRY, EXIT
 from state.signals import ns
+from state.signals import first, gen_result
 
 
 @dataclasses.dataclass
@@ -19,6 +22,27 @@ class Transition:
 
         self._source2dest[source.name] = dest
 
-    def __call__(self, sender: Vertex):
+    def __call__(self, sender: Vertex, **payload):
+        start = sender
         dest = self._source2dest[sender.name]
+        tree = dest.tree
+
+        lca = tree.get_lca(start, dest)
+
+        exit_path = tree.get_path(start, lca)
+        exit_path = it.takewhile(lambda v: v != lca, exit_path)
+
+        entry_path = tree.get_path(lca, dest)
+        entry_path = it.dropwhile(lambda v: v == lca, entry_path)
+
+        [EXIT.send(v) for v in exit_path]
+        [ENTRY.send(v) for v in entry_path]
+
+        successors = [gen_result(INIT, dest)]
+        while successors:
+            if vertex := first(successors.pop()):
+                ENTRY.send(vertex)
+                successors.append(gen_result(INIT, vertex))
+                dest = vertex
+
         return dest

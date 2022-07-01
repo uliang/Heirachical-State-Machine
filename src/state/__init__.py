@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Callable, ClassVar, Literal
 from types import MethodType
 
-from state.signals import ENTRY, EXIT, INIT
+from state.signals import ENTRY, EXIT 
 from state.signals import ns
 from state.signals import gen_result, first
 from state.model import State
@@ -11,48 +11,6 @@ from state.repository import StateRepository
 from state.transitions import Transition
 from state.protocols import Repository
 from state.tree import Vertex
-import blinker
-
-import itertools as it
-
-
-@dataclass
-class VertexPointer:
-    _head: Vertex
-
-    def handle(self, signal: blinker.Signal, **payload):
-        tree = self._head.tree
-        dest, root, start = None, tree["ROOT"], self._head
-
-        for vertex in tree.get_path(start, root):
-            if result := first(gen_result(signal, vertex, **payload)):
-                dest = result
-
-        if dest is None:
-            return
-
-        lca = tree.get_lca(start, dest)
-
-        exit_path = tree.get_path(start, lca)
-        exit_path = it.takewhile(lambda v: v != lca, exit_path)
-
-        entry_path = tree.get_path(lca, dest)
-        entry_path = it.dropwhile(lambda v: v == lca, entry_path)
-
-        [EXIT.send(v) for v in exit_path]
-        [ENTRY.send(v) for v in entry_path]
-
-        successors = [gen_result(INIT, dest)]
-        while successors:
-            if vertex := first(successors.pop()):
-                ENTRY.send(vertex)
-                successors.append(gen_result(INIT, vertex))
-                dest = vertex
-
-        self._head = dest
-
-    def points_to(self, name: str) -> bool:
-        return self._head.name == name
 
 
 @dataclass
