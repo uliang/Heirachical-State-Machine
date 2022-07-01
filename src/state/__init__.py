@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable, ClassVar
+from types import MethodType
 
 from state.signals import ENTRY, EXIT, INIT
 from state.signals import ns
@@ -84,8 +85,11 @@ class Entity:
                     for handler_name, signal in zip(
                         (handle_entry, handle_exit), (ENTRY, EXIT)
                     ):
-                        handler = getattr(self, handler_name, NOOP)
-                        signal.connect(handler, this_state)
+                        if handler_name != "UNSET": 
+                            handler = getattr(self, handler_name)
+                            action = self._bind_to_sender(handler_name, handler)
+
+                            signal.connect(action, this_state)
 
                     if initial:
                         transition = Transition("INIT", parent_state, this_state)
