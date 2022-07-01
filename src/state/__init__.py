@@ -79,11 +79,20 @@ class Entity:
         return method
 
     def isin(self, state_id: str) -> bool:
-        return self._current_state.points_to(state_id)
+        return self._current_state.name == state_id
 
     def dispatch(self, trigger: str, **payload):
         signal = ns.signal(trigger)
-        self._current_state.handle(signal, **payload)
+        root = self._repo.get("ROOT")
+        start, dest = self._current_state, None
+        tree = root.tree
+
+        for vertex in tree.get_path(start, root):
+            if result := first(gen_result(signal, vertex, **payload)):
+                dest = result
+
+        if dest:
+            self._current_state = dest
 
     def start(self):
         self.dispatch("INIT")
