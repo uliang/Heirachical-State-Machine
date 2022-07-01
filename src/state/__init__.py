@@ -15,10 +15,6 @@ import blinker
 import itertools as it
 
 
-def NOOP(sender):
-    pass
-
-
 @dataclass
 class VertexPointer:
     _head: Vertex
