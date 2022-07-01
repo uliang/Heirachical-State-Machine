@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Callable, ClassVar
+from typing import Callable, ClassVar, Literal
 from types import MethodType
 
 from state.signals import ENTRY, EXIT, INIT
@@ -59,7 +59,7 @@ class VertexPointer:
 class Entity:
     name: str
 
-    _current_state: VertexPointer = field(init=False, repr=False, default=None)
+    _current_state: Vertex | Literal["UNSET"] = field(default="UNSET", init=False)
     _repo: Repository[Vertex] = field(init=False, default=None)
     _transitions: list[Transition] = field(init=False, default_factory=list)
 
@@ -106,7 +106,8 @@ class Entity:
         self._repo = StateRepository(self.name)
 
         root = self._repo.get("ROOT")
-        self._current_state = VertexPointer(root)
+
+        self._current_state = root
 
         self._interpret()
         self._repo.tree.finalize()
