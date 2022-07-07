@@ -79,7 +79,15 @@ class Entity:
         return method
 
     def isin(self, state_id: str) -> bool:
-        return self._current_state.name == state_id
+        if state_id == 'ROOT': 
+            return True
+        head = self._current_state
+        while head != self._repo.get('ROOT'): 
+            if result := head.name == state_id:
+                return result 
+            head = head.parent
+        return False
+
 
     def dispatch(self, trigger: str, **payload):
         signal = ns.signal(trigger)
