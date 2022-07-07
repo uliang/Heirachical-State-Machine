@@ -48,31 +48,36 @@ def toaster():
     toaster_._repo.flush()
 
 
-class Keyboard(Entity): 
-    display:str = None 
-    def send_lower_case_scan_code(self, key:str): 
-        self.display = key.lower() 
+class Keyboard(Entity):
+    display: str = None
 
-    def send_upper_case_scan_code(self, key:str): 
+    def send_lower_case_scan_code(self, key: str):
+        self.display = key.lower()
+
+    def send_upper_case_scan_code(self, key: str):
         self.display = key.upper()
 
-    class StateConfig: 
-        default = State(initial=True, on = {
-            "ANY_KEY":  {"action": "send_lower_case_scan_code"},
-            "CAPS_LOCK": "caps_locked"
-            })
-        caps_locked = State(on={
-            "ANY_KEY": {"action": "send_upper_case_scan_code"}, 
-            "CAPS_LOCK": "default" 
-            })
+    class StateConfig:
+        default = State(
+            initial=True,
+            on={
+                "ANY_KEY": {"action": "send_lower_case_scan_code"},
+                "CAPS_LOCK": "caps_locked",
+            },
+        )
+        caps_locked = State(
+            on={
+                "ANY_KEY": {"action": "send_upper_case_scan_code"},
+                "CAPS_LOCK": "default",
+            }
+        )
 
 
-@pytest.fixture 
-def keyboard(): 
-    keyboard_ = Keyboard('keyboard')
+@pytest.fixture
+def keyboard():
+    keyboard_ = Keyboard("keyboard")
     keyboard_.start()
     yield keyboard_
     disconnect_signals_from(ns)
     keyboard_.stop()
     keyboard_._repo.flush()
-

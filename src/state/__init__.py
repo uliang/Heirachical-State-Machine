@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Callable, ClassVar, Literal
 from types import MethodType
 
-from state.signals import ENTRY, EXIT 
+from state.signals import ENTRY, EXIT
 from state.signals import ns
 from state.signals import gen_result, first
 from state.model import State
@@ -54,15 +54,21 @@ class Entity:
                         self._transitions.append(transition)
 
                     for trigger, dest_name in transition_object.items():
-                        match dest_name: 
-                            case str(dest_name): 
+                        match dest_name:
+                            case str(dest_name):
                                 dest = self._repo.get_or_create(dest_name)
-                                transition = Transition(trigger, source=this_state, dest=dest)
-                            case {"action": action_handler_name }:
-                                handler = getattr(self, action_handler_name) 
-                                transition = Transition(trigger, source=this_state, dest=this_state, action=handler) 
+                                transition = Transition(
+                                    trigger, source=this_state, dest=dest
+                                )
+                            case {"action": action_handler_name}:
+                                handler = getattr(self, action_handler_name)
+                                transition = Transition(
+                                    trigger,
+                                    source=this_state,
+                                    dest=this_state,
+                                    action=handler,
+                                )
                         self._transitions.append(transition)
-
 
                 case _:
                     pass
@@ -86,15 +92,14 @@ class Entity:
         return method
 
     def isin(self, state_id: str) -> bool:
-        if state_id == 'ROOT': 
+        if state_id == "ROOT":
             return True
         head = self._current_state
-        while head != self._repo.get('ROOT'): 
+        while head != self._repo.get("ROOT"):
             if result := head.name == state_id:
-                return result 
+                return result
             head = head.parent
         return False
-
 
     def dispatch(self, trigger: str, **payload):
         signal = ns.signal(trigger)

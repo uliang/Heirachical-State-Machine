@@ -37,5 +37,6 @@ def test_exit_action_fires_on_exit_from_state(toaster):
 
     assert not toaster.heater_on
 
-def test_isin_method_returns_true_for_superstates(toaster): 
-    assert toaster.isin('heating')
+
+def test_isin_method_returns_true_for_superstates(toaster):
+    assert toaster.isin("heating")

@@ -2,7 +2,7 @@ import dataclasses
 import itertools as it
 from typing import Callable
 from state.tree import Vertex
-from state.signals import INIT, ENTRY, EXIT 
+from state.signals import INIT, ENTRY, EXIT
 from state.signals import ns
 from state.signals import first, gen_result
 
@@ -14,7 +14,7 @@ class Transition:
     dest: dataclasses.InitVar[Vertex]
     action: dataclasses.InitVar[Callable] = None
 
-    _actions:  list[Callable] = dataclasses.field(init=False, default_factory=list )
+    _actions: list[Callable] = dataclasses.field(init=False, default_factory=list)
     _source2dest: dict[str, Vertex] = dataclasses.field(
         init=False, default_factory=dict
     )
@@ -22,7 +22,7 @@ class Transition:
     def __post_init__(self, trigger, source, dest, action):
         signal = ns.signal(trigger)
         signal.connect(self, source)
-        if action: 
+        if action:
             self._actions.append(action)
         self._source2dest[source.name] = dest
 
@@ -40,7 +40,7 @@ class Transition:
         entry_path = it.dropwhile(lambda v: v == lca, entry_path)
 
         [EXIT.send(v) for v in exit_path]
-        for action in self._actions: 
+        for action in self._actions:
             action(**payload)
         [ENTRY.send(v) for v in entry_path]
 
