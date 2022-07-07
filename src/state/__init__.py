@@ -53,9 +53,9 @@ class Entity:
                         transition = Transition("INIT", parent_state, this_state)
                         self._transitions.append(transition)
 
-                    for trigger, dest_name in transition_object.items():
-                        match dest_name:
-                            case str(dest_name):
+                    for trigger, transition_config in transition_object.items():
+                        match transition_config:
+                            case str(transition_config) as dest_name:
                                 dest = self._repo.get_or_create(dest_name)
                                 transition = Transition(
                                     trigger, source=this_state, dest=dest
