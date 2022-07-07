@@ -54,9 +54,16 @@ class Entity:
                         self._transitions.append(transition)
 
                     for trigger, dest_name in transition_object.items():
-                        dest = self._repo.get_or_create(dest_name)
-                        transition = Transition(trigger, source=this_state, dest=dest)
+                        match dest_name: 
+                            case str(dest_name): 
+                                dest = self._repo.get_or_create(dest_name)
+                                transition = Transition(trigger, source=this_state, dest=dest)
+                            case {"action": action_handler_name }:
+                                handler = getattr(self, action_handler_name) 
+                                transition = Transition(trigger, source=this_state, dest=this_state, action=handler) 
                         self._transitions.append(transition)
+
+
                 case _:
                     pass
 
